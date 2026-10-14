@@ -1,0 +1,29 @@
+# ============================================================
+# AI-Test-Orchestrator 平台基础配置
+# yml 语法：缩进表示层级关系（和阶段 1~2 的 YAML 用法一致）
+# ============================================================
+
+server:
+  # 平台端口 8081——RuoYi 后端占着 8080，错开才能同时运行
+  port: 8081
+
+spring:
+  application:
+    # 应用名（日志、监控里会显示）
+    name: ai-test-orchestrator
+
+  datasource:
+    # 四件套：驱动类 + 连接地址 + 账号 + 密码
+    # url 里的库名 = "锁定 ai_test_platform"——SQL 从此只写表名，不写库名
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ai_test_platform?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false
+    username: root
+    password: 123456
+
+# url 三个参数的含义：
+#   useUnicode + characterEncoding：中文不乱码
+#   serverTimezone=GMT+8：东八区（时间字段不错位，%2B 是 + 的转义写法）
+#   useSSL=false：本地连接不加密（localhost 没必要，去掉告警）
+#
+# 安全提示：密码明文写在配置里，学习项目直接入库没问题（RuoYi 也这样）；
+# 工程上正规做法是抽到 application-local.yml（已在 .gitignore 里）或环境变量。

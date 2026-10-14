@@ -1,0 +1,19 @@
+# ---- 编译产物（Maven 构建输出，随时可重新生成）----
+target/
+*.class
+
+# ---- IDE 配置（每人机器不同，不入库）----
+.idea/
+*.iml
+.vscode/
+
+# ---- 日志 ----
+*.log
+logs/
+
+# ---- 本地个人配置（含密码等敏感信息，不入库）----
+application-local.yml
+
+# ---- 操作系统杂项 ----
+.DS_Store
+Thumbs.db
