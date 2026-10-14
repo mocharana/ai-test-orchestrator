@@ -23,6 +23,8 @@
     <properties>
         <!-- 覆盖 parent 默认的 java.version=17，改用我们机器上的 OpenJDK 25 -->
         <java.version>25</java.version>
+        <!-- jjwt 版本集中定义：三处依赖引用同一变量，升级只改这一个数（RuoYi 同款做法） -->
+        <jjwt.version>0.13.0</jjwt.version>
     </properties>
 
     <dependencies>
@@ -52,6 +54,39 @@
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- BCrypt 密码加密：注意只引 Spring Security 的 crypto 单模块，
+             不是整个 Security 安全框架（我们只要加密，不要登录页/过滤器全家桶）。
+             版本不写——Spring 官方 BOM 管着它（对照 M1-3 的 jjwt：第三方要自己查） -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
+        <!-- JWT 三件套（官方推荐拆分式引法）：
+             api    = 我们的代码要用的接口（编译期）
+             impl   = 接口的实现（运行时才需要）
+             jackson= JWT 与 JSON 互转的实现（运行时）
+             jjwt 是纯工具库、不依赖 Spring——所以不存在"与 SB 4.1 适配"问题，
+             只需 JDK 兼容（0.13 要 Java 8+，我们的 25 绰绰有余）。
+             版本不写死三遍，引用 properties 里的 ${jjwt.version} -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
 

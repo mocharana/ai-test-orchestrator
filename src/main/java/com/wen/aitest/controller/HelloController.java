@@ -33,4 +33,14 @@ public class HelloController {
     public Result<Void> boom() {
         throw new BizException(1001, "这是故意制造的业务异常");
     }
+
+    /**
+     * 受保护接口示例（M1-4）：不在白名单 → 必须带票才能进。
+     * currentUser 是 JwtInterceptor 验票通过后挂到 request 上的。
+     */
+    @GetMapping("/me")
+    public Result<String> me(jakarta.servlet.http.HttpServletRequest request) {
+        String currentUser = (String) request.getAttribute("currentUser");
+        return Result.ok("当前登录用户：" + currentUser);
+    }
 }
