@@ -39,3 +39,12 @@ jwt:
   secret: wen-aitest-platform-jwt-secret-key-2026-32bytes!
   # 门票有效期（小时）
   expire-hours: 24
+
+# ============================================================
+# 被测对象配置（M3-3）：执行引擎跑用例前先登录 RuoYi 拿 token
+# 换被测系统 = 只改这段配置，代码不动
+# ============================================================
+ruoyi:
+  base-url: http://localhost:8080
+  username: admin
+  password: admin123

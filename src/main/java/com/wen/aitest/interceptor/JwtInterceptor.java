@@ -4,13 +4,14 @@ import com.wen.aitest.common.Result;
 import com.wen.aitest.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import tools.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+
 public class JwtInterceptor implements HandlerInterceptor {
 
     private final JwtUtil jwtUtil;
