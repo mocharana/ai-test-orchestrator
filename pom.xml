@@ -49,6 +49,15 @@
             <version>3.5.17</version>
         </dependency>
 
+        <!-- 分页插件模块：MP 3.5.9 起把 PaginationInnerInterceptor 拆出 extension
+             （它依赖 jsqlparser，SQL 解析库版本升级频繁，官方解耦成可选模块）。
+             不引它 = "找不到符号 PaginationInnerInterceptor"——本项目第二个第三方库拆分坑 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>3.5.17</version>
+        </dependency>
+
         <!-- MySQL 驱动：Java 与 MySQL 之间的"翻译官"。
              不写版本号（parent 管）；runtime = 只在程序运行时需要，写代码从不 import 它 -->
         <dependency>

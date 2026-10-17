@@ -15,8 +15,11 @@ spring:
   datasource:
     # 四件套：驱动类 + 连接地址 + 账号 + 密码
     # url 里的库名 = "锁定 ai_test_platform"——SQL 从此只写表名，不写库名
+    # allowPublicKeyRetrieval=true：MySQL 8 的 caching_sha2 认证插件在服务重启后
+    #   需要向服务器索取 RSA 公钥加密密码，驱动默认禁止（防中间人）——
+    #   本地开发打开无妨；公网环境的正确姿势是走 SSL 而不是开这个开关
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/ai_test_platform?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false
+    url: jdbc:mysql://localhost:3306/ai_test_platform?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: 123456
 
