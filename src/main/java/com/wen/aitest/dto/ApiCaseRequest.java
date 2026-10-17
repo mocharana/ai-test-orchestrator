@@ -5,9 +5,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
- * 新增/修改用例的信封（两接口共用）。
- * headers/params/body/asserts 由前端传 JSON 字符串；
- * JSON 内部结构的合法性由 M5 校验器与 M3 执行器把关（此处只查核心字段非空）。
+ * 新增/修改用例请求（两接口共用）。
+ * headers/params/body/asserts 为 JSON 字符串，结构合法性由执行引擎与 AI 校验器把关。
  */
 @Data
 public class ApiCaseRequest {
@@ -16,7 +15,7 @@ public class ApiCaseRequest {
     @Size(max = 100, message = "用例名称最长 100")
     private String caseName;
 
-    /** 可选：不填 service 里兜底为"默认" */
+    /** 可选：不填默认"默认" */
     private String module;
 
     /** 可选：0=P0 1=P1 2=P2，不填默认 2 */

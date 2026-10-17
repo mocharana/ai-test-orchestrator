@@ -8,11 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Swagger 配置：向文档页声明"本平台的接口用 Bearer token 认证"。
- *
- * 声明后 Swagger 页面右上角出现 Authorize 按钮：
- * 登录拿到 token → 粘贴一次 → 之后每个接口试调都自动带上请求头，
- * 不用手动一个一个加 Authorization 头。
+ * Swagger 认证配置：声明 Bearer 方案后，页面出现 Authorize 按钮（贴 token 一次全局生效）。
  */
 @Configuration
 public class OpenApiConfig {
@@ -25,7 +21,7 @@ public class OpenApiConfig {
                 .components(new Components().addSecuritySchemes(schemeName,
                         new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")          // HTTP Bearer 方案
-                                .bearerFormat("JWT")));    // 文档展示用标注
+                                .scheme("bearer")
+                                .bearerFormat("JWT")));
     }
 }

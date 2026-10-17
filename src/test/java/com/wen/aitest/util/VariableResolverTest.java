@@ -8,13 +8,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-/**
- * VariableResolver 的单元测试。
- *
- * 用例设计思路（测开基本功实战）：
- *   正常流（单变量/多变量/重复占位）+ 边界（无占位/null/空变量表）+ 特殊场景（未定义变量）
- *   —— 等价类划分 + 边界值分析，阶段 6 的"用例设计方法"在这里先落地。
- */
+/** 变量替换器单测：覆盖正常流/边界/特殊场景（等价类+边界值） */
 @DisplayName("变量替换器")
 class VariableResolverTest {
 
@@ -43,7 +37,7 @@ class VariableResolverTest {
     }
 
     @Test
-    @DisplayName("未定义变量：保留 {{key}} 原样——排障时一眼看出哪个变量没配")
+    @DisplayName("未定义变量：保留 {{key}} 原样")
     void undefinedKeptAsIs() {
         String r = VariableResolver.resolve("Bearer {{token}}-{{unknown}}",
                 Map.of("token", "t1"));

@@ -26,10 +26,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 异步执行体：真正"跑用例"的地方——@Async 丢进 executionExecutor 线程池。
- *
- * 执行一条用例的完整链路（把前面所有模块串起来）：
- *   取用例 → 变量替换(M3-1) → 发请求(M3-2上) → 断言(M3-2下) → 结果落库(本类数据层)
+ * 异步执行体：登录被测系统取 token → 逐条执行（替换变量/发请求/断言）→ 结果落库 → 更新批次。
+ * 执行明细有意不加事务：渐进可见（跑到哪存到哪），与批量导入的原子性要求相反。
  */
 @Slf4j
 @Component
@@ -50,10 +48,9 @@ public class ExecutionRunner {
     @Value("${ruoyi.password}")
     private String ruoyiPassword;
 
-    /** 线程池满被拒时 @Async 会抛异常到调用方（AbortPolicy）——由 ExecutionService 的调用链体现 */
     @Async("executionExecutor")
     public void runAsync(Long executionId, List<Long> caseIds, String currentUser) {
-        // 外层兜底：任何意外都不能让批次永远卡在 RUNNING
+        // 兜底：任何意外都不能让批次卡在 RUNNING
         try {
             doRun(executionId, caseIds, currentUser);
         } catch (Exception e) {
@@ -63,19 +60,17 @@ public class ExecutionRunner {
     }
 
     private void doRun(Long executionId, List<Long> caseIds, String currentUser) {
-        // ① 准备变量表：先登录 RuoYi 拿 token——{{token}} 的"墨水"来源
+        // ① 准备变量表：登录被测系统拿 token（{{token}} 的取值来源）
         Map<String, String> variables = new HashMap<>();
         String token = loginRuoYi();
         if (token == null) {
-            // 登录失败也继续跑：用例会收到 401 自然失败——如实记录，不掩盖
+            // 登录失败也继续跑：用例收到 401 自然失败，如实记录
             log.warn("批次 {}：RuoYi 登录失败，用例将以未认证状态执行", executionId);
         } else {
             variables.put("token", token);
         }
 
         // ② 逐条执行：发请求 → 断言 → 落库
-        //    ⚠️ 有意不加 @Transactional：执行要"渐进可见"（跑到哪存到哪，中途崩也有部分结果可查）
-        //    和 M2-3 批量导入（必须原子）相反——事务粒度由业务语义决定，不是套路
         int passed = 0, failed = 0;
         for (Long caseId : caseIds) {
             ApiCase c = apiCaseMapper.selectById(caseId);
@@ -93,14 +88,11 @@ public class ExecutionRunner {
                 failed++;
             } else {
                 row.setCaseName(c.getCaseName());
-                // 发请求（变量替换在 HttpExecutor 内部第一步）
                 HttpResult hr = httpExecutor.execute(c, variables);
-                // 断言
                 List<AssertResult> ars = AssertEngine.check(
                         hr.status(), hr.body(), AssertEngine.parseRules(c.getAsserts()));
                 boolean allPass = ars.stream().allMatch(AssertResult::passed);
-                // 落库
-                row.setCaseName(c.getCaseName());
+
                 row.setPassed(allPass ? 1 : 0);
                 row.setHttpStatus(hr.status());
                 row.setAssertSummary(buildSummary(ars));
@@ -116,10 +108,7 @@ public class ExecutionRunner {
         log.info("批次 {} 执行完成：{} 通过 / {} 失败", executionId, passed, failed);
     }
 
-    /**
-     * 登录 RuoYi 拿 token——执行引擎的"前置准备"动作。
-     * 复用 HttpExecutor（构造一个临时用例对象）——执行器自己也是"发请求"的活，不另起炉灶。
-     */
+    /** 登录被测系统拿 token：构造临时用例对象复用 HttpExecutor */
     private String loginRuoYi() {
         ApiCase loginCase = new ApiCase();
         loginCase.setMethod("POST");
@@ -139,7 +128,7 @@ public class ExecutionRunner {
         }
     }
 
-    /** 断言结果 → 一句话摘要（报告页明细里展示） */
+    /** 断言结果 → 摘要（报告明细展示用） */
     private String buildSummary(List<AssertResult> ars) {
         long passCount = ars.stream().filter(AssertResult::passed).count();
         String base = ars.size() + " 条断言 " + passCount + " 通过";
@@ -150,7 +139,7 @@ public class ExecutionRunner {
         return fails.isEmpty() ? base : base + "；失败：" + fails;
     }
 
-    /** 响应体快照截断：TEXT 列上限 64KB，快照用途 5000 字符足够 */
+    /** 响应体快照截断，避免超过 TEXT 列上限 */
     private String truncate(String s, int max) {
         if (s == null) return null;
         return s.length() > max ? s.substring(0, max) + "...(已截断)" : s;

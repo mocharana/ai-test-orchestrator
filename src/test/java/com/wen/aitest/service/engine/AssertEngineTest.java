@@ -9,16 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * 断言引擎的单元测试。
- *
- * 用例设计：正常通过 / 各类失败 / 边界（非 JSON 体、路径缺失）——
- * 其中"嵌套+数组下标"用例直接复刻 RuoYi 列表接口的真实响应结构。
- */
+/** 断言引擎单测：通过/失败/非 JSON 体/路径缺失等场景（嵌套用例复刻 RuoYi 真实结构） */
 @DisplayName("断言引擎")
 class AssertEngineTest {
 
-    /** 组合工具：解析规则 → 执行断言（模拟 M3-3 执行服务的调用方式） */
+    /** 组合工具：解析规则 → 执行断言（模拟执行服务的调用方式） */
     private List<AssertResult> run(String assertsJson, int status, String body) {
         return AssertEngine.check(status, body, AssertEngine.parseRules(assertsJson));
     }

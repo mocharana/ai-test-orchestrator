@@ -8,12 +8,8 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * t_api_case 表的影子——"用例即数据"的 Java 形态。
- *
- * headers/params/body/asserts 存的是 JSON 字符串（TEXT 列），
- * M3 执行引擎再解析成对象使用——存储时一坨字符串，执行时才拆开。
- *
- * 字段名 asserts（不是 assert）：assert 是 Java 关键字（断言语句），要避开。
+ * t_api_case 表实体：一条用例 = 一行数据。
+ * headers/params/body/asserts 为 JSON 字符串（TEXT 列），执行引擎解析后使用。
  */
 @Data
 @TableName("t_api_case")
@@ -26,7 +22,7 @@ public class ApiCase {
 
     private String module;
 
-    /** 0=P0 1=P1 2=P2（冒烟跑 P0，回归跑 P0+P1） */
+    /** 0=P0 1=P1 2=P2 */
     private Integer priority;
 
     private String method;
@@ -39,13 +35,14 @@ public class ApiCase {
 
     private String body;
 
+    /** 字段名避开 Java 关键字 assert */
     private String asserts;
 
     private String remark;
 
     private Integer status;
 
-    /** 创建人——值来自 M1 拦截器 request.setAttribute("currentUser")，伏笔回收 */
+    /** 创建人（当前登录用户） */
     private String createBy;
 
     private LocalDateTime createTime;

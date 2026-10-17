@@ -21,10 +21,8 @@ import java.util.List;
 
 /**
  * 执行引擎接口：
- * POST /execution/run           发起执行（异步，立即返回批次 ID）
- * GET  /execution/{id}          批次状态与统计（轮询看 RUNNING → FINISHED）
- * GET  /execution/{id}/results  结果明细
- * GET  /execution/page          批次历史
+ * POST /execution/run 发起执行（异步，秒回批次 ID）| GET /execution/{id} 轮询状态
+ * GET /execution/{id}/results 明细 | GET /execution/page 批次历史
  */
 @RestController
 @RequestMapping("/execution")

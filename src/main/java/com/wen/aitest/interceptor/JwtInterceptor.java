@@ -9,9 +9,12 @@ import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * JWT 拦截器：Controller 前验票，验票通过后把用户名挂到 request 供 Controller 读取。
+ * 失败时需自行写 JSON 响应（@RestControllerAdvice 不覆盖拦截器层）。
+ */
 @Component
 @RequiredArgsConstructor
-
 public class JwtInterceptor implements HandlerInterceptor {
 
     private final JwtUtil jwtUtil;

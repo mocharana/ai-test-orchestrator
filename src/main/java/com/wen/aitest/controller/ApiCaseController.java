@@ -21,14 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * 用例管理五接口——RESTful 风格：
- * POST   /api-case          新增
- * PUT    /api-case/{id}     修改
- * DELETE /api-case/{id}     删除
- * GET    /api-case/{id}     单查
- * GET    /api-case/page     分页筛选
- *
- * 全部不在白名单 → 必须带票（M1 拦截器保护的第一批真实业务接口）。
+ * 用例管理接口（RESTful）：
+ * POST /api-case 新增 | PUT /api-case/{id} 修改 | DELETE /api-case/{id} 删除
+ * GET /api-case/{id} 单查 | GET /api-case/page 分页筛选 | POST /api-case/import 批量导入
+ * 全部需登录（不在拦截器白名单）。
  */
 @RestController
 @RequestMapping("/api-case")
@@ -37,7 +33,7 @@ public class ApiCaseController {
 
     private final ApiCaseService apiCaseService;
 
-    /** 新增。HttpServletRequest 由框架注入，getAttribute 取门卫挂的用户名 */
+    /** 新增：createBy 取拦截器写入的当前登录用户 */
     @PostMapping
     public Result<Void> create(@Valid @RequestBody ApiCaseRequest req, HttpServletRequest request) {
         String currentUser = (String) request.getAttribute("currentUser");
@@ -45,7 +41,6 @@ public class ApiCaseController {
         return Result.ok();
     }
 
-    /** {id} 是路径占位符：请求 /api-case/5 → @PathVariable 拿到 5 */
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id, @Valid @RequestBody ApiCaseRequest req) {
         apiCaseService.update(id, req);
@@ -63,11 +58,7 @@ public class ApiCaseController {
         return Result.ok(apiCaseService.getById(id));
     }
 
-    /**
-     * 批量导入。请求体是 JSON 数组（不是单个对象）：
-     * [ {...}, {...} ] —— 每个元素结构和单条新增一致。
-     * 事务在 service 层：一条坏数据 = 整批回滚。
-     */
+    /** 批量导入：请求体为 JSON 数组，任一条失败整批回滚（事务在 service 层） */
     @PostMapping("/import")
     public Result<String> importCases(@RequestBody List<ApiCaseRequest> list, HttpServletRequest request) {
         String currentUser = (String) request.getAttribute("currentUser");
@@ -75,11 +66,7 @@ public class ApiCaseController {
         return Result.ok("成功导入 " + count + " 条");
     }
 
-    /**
-     * 分页筛选。@RequestParam 读 URL 问号后的参数：
-     * GET /api-case/page?pageNum=1&pageSize=10&module=公告模块
-     * defaultValue = 不传给默认值；required=false = 可选参数
-     */
+    /** 分页筛选：pageNum/pageSize 必填有默认值，module/caseName/priority 可选 */
     @GetMapping("/page")
     public Result<Page<ApiCase>> page(
             @RequestParam(defaultValue = "1") long pageNum,

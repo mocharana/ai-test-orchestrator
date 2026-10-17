@@ -7,14 +7,7 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/**
- * t_user 表在 Java 里的"影子"：一个字段对应一个列。
- *
- * MyBatis-Plus 的列映射约定（启动时反射读取）：
- *   类名 ↔ 表名：靠 @TableName 显式指定
- *   字段 ↔ 列名：驼峰自动转下划线（createTime ↔ create_time，默认开启）
- *   主键：@TableId(type = IdType.AUTO) = 数据库自增，插入后 MP 自动把新 id 回填到对象
- */
+/** t_user 表实体。字段↔列名靠 MP 驼峰转下划线约定映射 */
 @Data
 @TableName("t_user")
 public class User {
@@ -24,7 +17,7 @@ public class User {
 
     private String username;
 
-    /** 存的是 BCrypt 密文；永远不返回给前端（M1-2 注册时加密，拦截器管返回过滤） */
+    /** BCrypt 密文，永不返回给前端 */
     private String password;
 
     private String nickname;

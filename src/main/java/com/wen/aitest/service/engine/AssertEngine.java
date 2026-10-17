@@ -8,16 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 断言引擎：阶段 2 response_checker.py 三层断言的 Java 复刻。
- *
- * 支持两类断言：
- *   http_status —— HTTP 状态码比对
- *   json_path   —— 按点号路径从响应 JSON 取值比对（数字段 = 数组下标，如 rows.0.noticeTitle）
- *
- * 为什么不引第三方 JSONPath 库？需求只有"点号+下标"两层语义，
- * 自研 20 行足够；等真需要复杂路径表达式时再引 jayway json-path——依赖权衡。
- *
- * static 纯逻辑（无状态、不读配置）——与 VariableResolver 同款判断。
+ * 断言引擎：http_status 状态码比对 / json_path 路径取值比对。
+ * 取值路径格式 a.b.0.c（点号分段，数字段为数组下标）——自研实现，避免引入 jayway 依赖。
  */
 public class AssertEngine {
 
@@ -40,15 +32,8 @@ public class AssertEngine {
         return rules;
     }
 
-    /**
-     * 执行全部断言。
-     *
-     * @param actualStatus 执行器拿到的 HTTP 状态码（0 = 网络级失败）
-     * @param responseBody 响应体原文（可能是 JSON / HTML / 纯文本）
-     * @param rules        断言规则列表
-     */
+    /** 执行全部断言。响应体非 JSON 时 json_path 断言判失败并注明原因 */
     public static List<AssertResult> check(int actualStatus, String responseBody, List<AssertRule> rules) {
-        // 响应体是否为合法 JSON——提前探测一次，json_path 断言据此分流
         JsonNode root = null;
         boolean bodyIsJson = false;
         if (responseBody != null && !responseBody.isBlank()) {
@@ -56,7 +41,7 @@ public class AssertEngine {
                 root = MAPPER.readTree(responseBody);
                 bodyIsJson = root.isObject() || root.isArray();
             } catch (Exception ignored) {
-                // 非 JSON（HTML/纯文本/网络失败文本）——不是错误，是测试结果的一部分
+                // 非 JSON 响应体（HTML/纯文本）不是错误，是测试结果的一部分
             }
         }
 
@@ -68,7 +53,6 @@ public class AssertEngine {
     }
 
     private static AssertResult checkOne(AssertRule r, int actualStatus, JsonNode root, boolean bodyIsJson) {
-        // 箭头 switch（Java 14+）：不用 break、编译器检查覆盖完整
         return switch (r.type()) {
             case "http_status" -> {
                 String actual = String.valueOf(actualStatus);
@@ -95,14 +79,14 @@ public class AssertEngine {
         };
     }
 
-    /** 按 a.b.0.c 取值：点号分段，纯数字段 = 数组下标；任一段缺失 → null */
+    /** 按点号路径逐段取值，任一段缺失返回 null */
     private static String pick(JsonNode root, String path) {
         JsonNode cur = root;
         for (String seg : path.split("\\.")) {
             if (seg.matches("\\d+")) {
-                cur = cur.get(Integer.parseInt(seg));   // 数组下标（越界返回 null）
+                cur = cur.get(Integer.parseInt(seg));
             } else {
-                cur = cur.path(seg);                     // 对象字段（缺失返回 MissingNode）
+                cur = cur.path(seg);
             }
             if (cur == null || cur.isMissingNode()) {
                 return null;
