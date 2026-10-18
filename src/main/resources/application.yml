@@ -42,4 +42,13 @@ ruoyi:
   username: admin
   password: admin123
 
+# ============================================================
+# UI 执行器配置（M4）：ProcessBuilder 用这个 python 跑阶段 3 的 pytest 用例
+# ============================================================
+pytest:
+  # 阶段 3 venv 的 python 解释器（保证 selenium/pytest 依赖都在）
+  python-path: C:\Users\rana\Desktop\Python\ruoyi_ui_framework\venv\Scripts\python.exe
+  # pytest 项目根目录（conftest.py / pytest.ini 所在，作为子进程工作目录）
+  work-dir: C:\Users\rana\Desktop\Python\ruoyi_ui_framework
+
 # 安全提示：密码明文入库仅限学习项目；正规做法抽到 application-local.yml（已在 .gitignore）或环境变量

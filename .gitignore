@@ -17,3 +17,8 @@ application-local.yml
 # ---- 操作系统杂项 ----
 .DS_Store
 Thumbs.db
+
+# ---- 前端（web，Vue3+Vite4）----
+web/node_modules/
+web/dist/
+web/start-log.txt
