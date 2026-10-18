@@ -1,7 +1,7 @@
 <template>
   <el-card>
     <div style="margin-bottom:14px">
-      <el-button type="primary" @click="load">刷新</el-button>
+      <el-button type="primary" @click="load()">刷新</el-button>
       <span style="margin-left:10px; color:#909399; font-size:13px">提示：执行中批次会从 RUNNING 变为 FINISHED，手动刷新查看</span>
     </div>
 
