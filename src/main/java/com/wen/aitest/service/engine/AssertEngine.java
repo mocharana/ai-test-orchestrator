@@ -26,7 +26,7 @@ public class AssertEngine {
         List<AssertRule> rules = new ArrayList<>();
         JsonNode arr = MAPPER.readTree(assertsJson);
         arr.forEach(n -> rules.add(new AssertRule(
-                n.get("type").asString(),
+                n.has("type") ? n.get("type").asString() : null,
                 n.has("path") ? n.get("path").asString() : null,
                 n.has("expect") ? n.get("expect").asString() : null)));
         return rules;
@@ -61,11 +61,18 @@ public class AssertEngine {
                         pass ? "状态码匹配" : "期望状态码 " + r.expect() + "，实际 " + actual);
             }
             case "json_path" -> {
+                if (r.path() == null || r.path().isBlank()) {
+                    // 字段契约漂移防御：AI 曾把路径放 expect、value 放期望值——path 缺失时如实记失败而非 NPE
+                    yield new AssertResult(false, r.type(), r.path(), r.expect(),
+                            "(缺少 path 字段)", "json_path 断言缺少 path 字段（路径必须放 path，期望值放 expect）");
+                }
                 if (!bodyIsJson) {
                     yield new AssertResult(false, r.type(), r.path(), r.expect(),
                             "(响应体不是合法 JSON)", "响应体不是 JSON，无法按路径取值");
                 }
-                String actual = pick(root, r.path());
+                // 记法宽容：AI/人都习惯 JSONPath 的 $.a.b 写法，自研引擎按点号分段——剥掉 $. 前缀再取值
+                String path = r.path().startsWith("$.") ? r.path().substring(2) : r.path();
+                String actual = pick(root, path);
                 if (actual == null) {
                     yield new AssertResult(false, r.type(), r.path(), r.expect(),
                             "(路径不存在)", "路径 " + r.path() + " 在响应中不存在");

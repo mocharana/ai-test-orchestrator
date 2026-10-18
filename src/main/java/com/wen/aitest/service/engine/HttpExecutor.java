@@ -55,11 +55,21 @@ public class HttpExecutor {
             // ② params JSON 拼进 URL 查询串
             url = appendParams(resolvedUrl, paramsJson);
 
-            // ③ 解析请求头；POST 带 body 时默认补 Content-Type
+            // ③ 解析请求头（形态宽容：数组 [{key,value}] 或对象 {k:v} 都能吃——AI/手写两种习惯都兼容）；
+            //    POST 带 body 时默认补 Content-Type
             Map<String, String> headerMap = new HashMap<>();
             if (StringUtils.hasText(headersJson)) {
-                JsonNode arr = objectMapper.readTree(headersJson);
-                arr.forEach(n -> headerMap.put(n.get("key").asString(), n.get("value").asString()));
+                JsonNode h = objectMapper.readTree(headersJson);
+                if (h.isArray()) {
+                    h.forEach(n -> {
+                        String k = n.path("key").asString("");
+                        if (!k.isEmpty()) {
+                            headerMap.put(k, n.path("value").asString(""));
+                        }
+                    });
+                } else if (h.isObject()) {
+                    h.properties().forEach(e -> headerMap.put(e.getKey(), e.getValue().asString("")));
+                }
             }
             boolean hasBody = StringUtils.hasText(body) && !"GET".equalsIgnoreCase(c.getMethod());
             if (hasBody && !headerMap.containsKey("Content-Type")) {
@@ -78,12 +88,14 @@ public class HttpExecutor {
                     res.getStatusCode().value(),
                     res.bodyTo(String.class)));
 
+        } catch (BizException e) {
+            throw e; // 用例配置错误：上抛给 Runner 逐条记录（不该被误标成"网络异常"）
         } catch (JacksonException e) {
             // 用例数据不是合法 JSON——配置错误，快速失败
             throw new BizException(3001, "用例数据 JSON 格式错误：" + e.getMessage());
         } catch (Exception e) {
-            // 网络级失败（连接拒绝/超时）→ status=0，message 说明原因
-            return new HttpResult(0, "网络异常：" + e.getMessage());
+            // 网络级失败（连接拒绝/超时）→ status=0；带上异常类型，避免 NPE 之类被误标成网络问题
+            return new HttpResult(0, "请求失败[" + e.getClass().getSimpleName() + "]：" + e.getMessage());
         }
     }
 

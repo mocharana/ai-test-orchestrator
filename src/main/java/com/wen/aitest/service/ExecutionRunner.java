@@ -78,27 +78,38 @@ public class ExecutionRunner {
             ApiResult row = new ApiResult();
             row.setExecutionId(executionId);
             row.setCaseId(caseId);
+            try {
+                if (c == null) {
+                    row.setCaseName("用例#" + caseId);
+                    row.setPassed(0);
+                    row.setHttpStatus(0);
+                    row.setAssertSummary("用例不存在（可能已删除）");
+                    row.setCostMs(0L);
+                    failed++;
+                } else {
+                    row.setCaseName(c.getCaseName());
+                    HttpResult hr = httpExecutor.execute(c, variables);
+                    List<AssertResult> ars = AssertEngine.check(
+                            hr.status(), hr.body(), AssertEngine.parseRules(c.getAsserts()));
+                    boolean allPass = ars.stream().allMatch(AssertResult::passed);
 
-            if (c == null) {
-                row.setCaseName("用例#" + caseId);
+                    row.setPassed(allPass ? 1 : 0);
+                    row.setHttpStatus(hr.status());
+                    row.setAssertSummary(buildSummary(ars));
+                    row.setResponseBody(truncate(hr.body(), 5000));
+                    row.setCostMs(System.currentTimeMillis() - t0);
+                    if (allPass) passed++; else failed++;
+                }
+            } catch (Exception e) {
+                // 单条用例意外异常：如实记录为失败明细，绝不拖垮整批、绝不丢明细行
+                // （教训：AI 断言契约漂移曾在此炸出 NPE，批次计了失败却查无明细）
+                String msg = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                log.warn("批次 {} 用例 {} 执行异常：{}", executionId, caseId, msg);
                 row.setPassed(0);
                 row.setHttpStatus(0);
-                row.setAssertSummary("用例不存在（可能已删除）");
-                row.setCostMs(0L);
-                failed++;
-            } else {
-                row.setCaseName(c.getCaseName());
-                HttpResult hr = httpExecutor.execute(c, variables);
-                List<AssertResult> ars = AssertEngine.check(
-                        hr.status(), hr.body(), AssertEngine.parseRules(c.getAsserts()));
-                boolean allPass = ars.stream().allMatch(AssertResult::passed);
-
-                row.setPassed(allPass ? 1 : 0);
-                row.setHttpStatus(hr.status());
-                row.setAssertSummary(buildSummary(ars));
-                row.setResponseBody(truncate(hr.body(), 5000));
+                row.setAssertSummary("执行异常：" + msg);
                 row.setCostMs(System.currentTimeMillis() - t0);
-                if (allPass) passed++; else failed++;
+                failed++;
             }
             apiResultMapper.insert(row);
         }
