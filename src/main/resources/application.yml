@@ -10,6 +10,26 @@ spring:
   application:
     name: ai-test-orchestrator
 
+  # 私密配置导入：application-local.yml 在项目根、已被 .gitignore（只放密钥这类"不上库"的东西）
+  # optional = 文件不存在也不报错（换机器没建此文件时服务仍能起，只是 AI 功能不可用）
+  config:
+    import: "optional:file:./application-local.yml"
+
+  # ============================================================
+  # AI 接入（M5）：Spring AI 走 OpenAI 兼容协议连智谱
+  # 模型名 glm-4.5-flash = 智谱当前免费文本模型（老 glm-4-flash 已被 4.5 取代，官方文档已核实）
+  # ============================================================
+  ai:
+    openai:
+      # 智谱的 OpenAI 兼容端点（兼容 = 请求/响应格式与 OpenAI 一模一样，换个地址就能用）
+      base-url: https://open.bigmodel.cn/api/paas/v4
+      # Key 本体在 application-local.yml（不进 git），这里只留引用
+      api-key: ${zhipu.api-key:}
+      chat:
+        options:
+          model: glm-4.5-flash
+          temperature: 0.7
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 库名锁定 ai_test_platform，SQL 只写表名
