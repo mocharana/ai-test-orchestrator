@@ -5,6 +5,7 @@
       <el-input v-model="query.caseName" placeholder="用例名称" style="width:200px" clearable />
       <el-button type="primary" @click="load(1)">查询</el-button>
       <el-button @click="reset">重置</el-button>
+      <el-button type="warning" @click="aiDialog = true">AI 生成用例</el-button>
       <el-button type="success" style="margin-left:auto" @click="openAdd">新增用例</el-button>
     </div>
 
@@ -59,6 +60,36 @@
         <el-button type="primary" @click="save">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- AI 生成：输入需求 → 调 /ai/generate-cases（耗时 15s+，单独放宽超时） -->
+    <el-dialog v-model="aiDialog" title="AI 生成接口用例" width="640px">
+      <el-input v-model="aiRequirement" type="textarea" :rows="5"
+        placeholder="描述要测的功能。例：测试若依登录接口，地址 http://localhost:8080/login，POST，body 含 username/password，正确账号返回 code 200 和 token，密码错误返回错误提示" />
+      <template #footer>
+        <el-button @click="aiDialog = false">取消</el-button>
+        <el-button type="primary" :loading="aiLoading" @click="aiGenerate">
+          {{ aiLoading ? 'AI 思考中（约 15 秒）...' : '生成' }}
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- AI 生成结果报告：总数/入库/被拦原因 -->
+    <el-dialog v-model="aiResultDialog" title="AI 生成结果报告" width="640px">
+      <el-descriptions :column="3" border size="small">
+        <el-descriptions-item label="AI 总产出">{{ aiResult.total }}</el-descriptions-item>
+        <el-descriptions-item label="校验通过入库">{{ aiResult.accepted }}</el-descriptions-item>
+        <el-descriptions-item label="被拦截">{{ (aiResult.rejected || []).length }}</el-descriptions-item>
+      </el-descriptions>
+      <div v-if="aiResult.savedNames && aiResult.savedNames.length" style="margin-top:10px; font-size:13px">
+        已入库：{{ aiResult.savedNames.join('、') }}
+      </div>
+      <div v-for="r in aiResult.rejected || []" :key="r" style="color:#f56c6c; margin-top:6px; font-size:13px">
+        ✗ {{ r }}
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="aiResultDialog = false">知道了</el-button>
+      </template>
+    </el-dialog>
   </el-card>
 </template>
 
@@ -72,6 +103,13 @@ const total = ref(0)
 const query = reactive({ pageNum: 1, pageSize: 10, module: '', caseName: '' })
 const dialog = ref(false)
 const form = reactive({})
+
+// AI 生成相关状态
+const aiDialog = ref(false)
+const aiResultDialog = ref(false)
+const aiRequirement = ref('')
+const aiLoading = ref(false)
+const aiResult = ref({})
 
 async function load(pageNum) {
   if (pageNum) query.pageNum = pageNum
@@ -119,6 +157,24 @@ async function del(row) {
 async function runCase(row) {
   const id = await request.post('/execution/run', { caseIds: [row.id] })
   ElMessage.success('已发起执行，批次 ' + id + '，去「执行记录」查看结果')
+}
+
+/** AI 生成：全局 axios 超时 15s 不够（实测 15~17s），单请求放宽到 60s */
+async function aiGenerate() {
+  if (!aiRequirement.value.trim()) {
+    ElMessage.warning('先描述要测的功能')
+    return
+  }
+  aiLoading.value = true
+  try {
+    aiResult.value = await request.post('/ai/generate-cases',
+      { requirement: aiRequirement.value }, { timeout: 60000 })
+    aiDialog.value = false
+    aiResultDialog.value = true
+    load() // 刷新列表，新用例立刻可见
+  } finally {
+    aiLoading.value = false
+  }
 }
 
 onMounted(() => load())

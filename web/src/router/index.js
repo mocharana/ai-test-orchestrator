@@ -8,7 +8,8 @@ const router = createRouter({
     { path: '/', redirect: '/api-case' },
     { path: '/api-case', component: () => import('../views/ApiCase.vue') },
     { path: '/executions', component: () => import('../views/Executions.vue') },
-    { path: '/ui-suite', component: () => import('../views/UiSuite.vue') }
+    { path: '/ui-suite', component: () => import('../views/UiSuite.vue') },
+    { path: '/report', component: () => import('../views/Report.vue') }
   ]
 })
 

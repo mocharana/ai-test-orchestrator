@@ -43,6 +43,13 @@
           <el-table-column prop="httpStatus" label="状态码" width="80" />
           <el-table-column prop="assertSummary" label="断言摘要" min-width="180" show-overflow-tooltip />
           <el-table-column prop="costMs" label="耗时(ms)" width="90" />
+          <el-table-column label="操作" width="110" fixed="right">
+            <template #default="{ row }">
+              <!-- 只有失败行给 AI 归因入口 -->
+              <el-button v-if="row.passed === 0" size="small" type="warning"
+                :loading="aiBusyId === row.id" @click="analyze(row)">AI 归因</el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </template>
       <!-- UI 套件明细 -->
@@ -58,6 +65,11 @@
         </div>
       </template>
       <p v-else style="color:#909399">暂无明细数据</p>
+    </el-dialog>
+
+    <!-- AI 归因结果：两段式文本 -->
+    <el-dialog v-model="aiOpen" title="AI 失败归因" width="680px">
+      <div style="white-space:pre-wrap; line-height:1.7">{{ aiText }}</div>
     </el-dialog>
   </el-card>
 </template>
@@ -95,6 +107,21 @@ async function showDetail(row) {
     apiRows.value = []
   }
   detailDialog.value = true
+}
+
+/** AI 归因：按单条失败明细调 /ai/analyze-failure/{resultId}（15s+，放宽超时） */
+const aiText = ref('')
+const aiOpen = ref(false)
+const aiBusyId = ref(null)
+
+async function analyze(row) {
+  aiBusyId.value = row.id
+  try {
+    aiText.value = await request.post('/ai/analyze-failure/' + row.id, {}, { timeout: 60000 })
+    aiOpen.value = true
+  } finally {
+    aiBusyId.value = null
+  }
 }
 
 onMounted(() => load())

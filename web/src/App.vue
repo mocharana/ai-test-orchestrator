@@ -8,6 +8,7 @@
         <el-menu-item index="/api-case">接口用例</el-menu-item>
         <el-menu-item index="/executions">执行记录</el-menu-item>
         <el-menu-item index="/ui-suite">UI 套件</el-menu-item>
+        <el-menu-item index="/report">测试报告</el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
