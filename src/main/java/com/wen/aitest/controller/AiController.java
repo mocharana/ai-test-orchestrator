@@ -5,10 +5,14 @@ import com.wen.aitest.common.Result;
 import com.wen.aitest.dto.AiChatRequest;
 import com.wen.aitest.dto.AiGenerateRequest;
 import com.wen.aitest.dto.AiGenerateResult;
+import com.wen.aitest.service.AiAnalysisService;
 import com.wen.aitest.service.AiCaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,6 +35,9 @@ public class AiController {
     /** AI 生成用例业务（M5-2）：Prompt + 清洗 + 校验 + 落库 */
     private final AiCaseService aiCaseService;
 
+    /** 失败归因业务（M5-3）：证据三件套 → AI 分析 */
+    private final AiAnalysisService aiAnalysisService;
+
     @PostMapping("/chat")
     public Result<String> chat(@RequestBody AiChatRequest req) {
         String reply = chatClient.prompt()
@@ -42,10 +49,18 @@ public class AiController {
 
     /** 功能①：需求描述 → AI 生成接口用例（逐条机器校验，通过才入库，createBy=AI） */
     @PostMapping("/generate-cases")
-    public Result<AiGenerateResult> generateCases(@RequestBody AiGenerateRequest req) {
+    public Result<AiGenerateResult> generateCases(@RequestBody AiGenerateRequest req, HttpServletRequest request) {
         if (!StringUtils.hasText(req.requirement())) {
             throw new BizException(5002, "需求描述不能为空");
         }
-        return Result.ok(aiCaseService.generate(req.requirement()));
+        String currentUser = (String) request.getAttribute("currentUser");
+        return Result.ok(aiCaseService.generate(req.requirement(), currentUser));
+    }
+
+    /** 功能②：失败归因——按单条失败明细取证据三件套喂给 AI，输出原因分析与修复建议 */
+    @PostMapping("/analyze-failure/{resultId}")
+    public Result<String> analyzeFailure(@PathVariable Long resultId, HttpServletRequest request) {
+        String currentUser = (String) request.getAttribute("currentUser");
+        return Result.ok(aiAnalysisService.analyze(resultId, currentUser));
     }
 }

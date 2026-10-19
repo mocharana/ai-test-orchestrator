@@ -6,13 +6,10 @@ import com.wen.aitest.dto.AiGenerateResult;
 import com.wen.aitest.dto.ApiCaseRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * AI 生成用例：Prompt 模板 + 输出清洗 + 逐条机器校验 + 入库。
@@ -43,23 +40,16 @@ public class AiCaseService {
             4. url 用需求描述里出现的地址；没给就填 http://待补充。
             """;
 
-    private final ChatClient chatClient;
+    private final AiChatService aiChatService;
     private final AiCaseValidator validator;
     private final ApiCaseService apiCaseService;
     private final JsonMapper jsonMapper;
 
-    public AiGenerateResult generate(String requirement) {
-        // 1. 调 AI：温度调低(0.3)求稳；extraBody 关闭 GLM-4.5 默认开启的深度思考——
-        //    实测思考版 50s+ 且偶发网关 5xx，关掉后 15s 直出 JSON（结构化生成不需要发散）。
-        //    extraBody = 给请求体追加厂商扩展字段（thinking 是智谱私有参数，Spring AI 无原生字段）
-        String reply = chatClient.prompt()
-                .system(SYSTEM_PROMPT)
-                .user(requirement)
-                .options(OpenAiChatOptions.builder()
-                        .temperature(0.3)
-                        .extraBody(Map.of("thinking", Map.of("type", "disabled"))))
-                .call()
-                .content();
+    public AiGenerateResult generate(String requirement, String currentUser) {
+        // 1. 调 AI（统一通道 AiChatService：自动留痕 t_ai_log；温度 0.3 求稳；关深度思考）
+        String reply = aiChatService
+                .call("GENERATE", SYSTEM_PROMPT, requirement, currentUser, 0.3)
+                .reply();
 
         // 2. 清洗输出：截取首个 [ 到最后一个 ] 之间的内容（防 AI 嘴碎带围栏/解释）
         String json = extractJsonArray(reply);
