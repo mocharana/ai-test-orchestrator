@@ -146,6 +146,24 @@
 
     <build>
         <plugins>
+            <!-- 注解处理器显式声明：JDK 23 起 javac 默认关闭隐式注解处理（等效 -proc:none），
+                 不声明则 CI 上 Lombok 完全不生效——所有 getter/log "cannot find symbol"。
+                 IDEA 本地不炸是因为 IDEA 用自己的 Lombok 插件兜底——裸 Maven 必须自己声明。
+                 proc=full + annotationProcessorPaths 双保险，让本地与 CI 行为一致 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <proc>full</proc>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <!-- 打"可执行 jar"的插件（java -jar 就能跑）；顺带把 lombok 排除出最终包 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
