@@ -18,6 +18,13 @@
           <el-tag :type="['danger', 'warning', 'info'][row.priority]">{{ ['P0', 'P1', 'P2'][row.priority] }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="来源" width="80">
+        <template #default="{ row }">
+          <el-tag :type="row.createBy === 'AI' ? 'warning' : 'info'" size="small">
+            {{ row.createBy === 'AI' ? 'AI' : '手动' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="method" label="方法" width="80" />
       <el-table-column prop="url" label="URL" min-width="220" show-overflow-tooltip />
       <el-table-column label="操作" width="200" fixed="right">

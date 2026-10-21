@@ -5,10 +5,10 @@
     <el-aside width="200px" style="background: #001529">
       <div style="color:#fff; text-align:center; padding:20px 0; font-weight:bold">AI 智能测试平台</div>
       <el-menu router :default-active="$route.path" background-color="#001529" text-color="#ffffffa6" active-text-color="#fff" style="border-right:none">
-        <el-menu-item index="/api-case">接口用例</el-menu-item>
-        <el-menu-item index="/executions">执行记录</el-menu-item>
-        <el-menu-item index="/ui-suite">UI 套件</el-menu-item>
         <el-menu-item index="/report">测试报告</el-menu-item>
+        <el-menu-item index="/cases">接口用例</el-menu-item>
+        <el-menu-item index="/ui-suite">UI 用例</el-menu-item>
+        <el-menu-item index="/executions">执行记录</el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

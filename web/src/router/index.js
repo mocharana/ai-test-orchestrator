@@ -5,8 +5,8 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', component: Login },
-    { path: '/', redirect: '/api-case' },
-    { path: '/api-case', component: () => import('../views/ApiCase.vue') },
+    { path: '/', redirect: '/cases' },
+    { path: '/cases', component: () => import('../views/ApiCase.vue') },
     { path: '/executions', component: () => import('../views/Executions.vue') },
     { path: '/ui-suite', component: () => import('../views/UiSuite.vue') },
     { path: '/report', component: () => import('../views/Report.vue') }
