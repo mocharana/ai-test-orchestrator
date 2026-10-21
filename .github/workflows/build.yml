@@ -1,0 +1,29 @@
+name: build
+
+# 触发时机：push 到 main 自动跑；也支持在 Actions 页面手动触发（workflow_dispatch）
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    # GitHub 提供的免费构建机（Ubuntu），每次 push 开一台新机器跑完即焚
+    runs-on: ubuntu-latest
+    steps:
+      # 第 1 步：把仓库代码检出到构建机
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 第 2 步：装 JDK 25（temurin 发行版）+ 缓存 Maven 依赖（第二次起更快）
+      - name: Setup JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # 第 3 步：编译 + 跑全部 JUnit 测试（verify = 构建+测试一体）
+      # 13 个单测是纯逻辑测试，不依赖数据库——CI 机器上无需 MySQL
+      - name: Build & Test
+        run: mvn -B verify
