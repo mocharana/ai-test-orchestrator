@@ -56,7 +56,8 @@
       :total="total" :page-size="query.pageSize" :current-page="query.pageNum"
       @current-change="load" />
 
-    <el-dialog v-model="dialog" :title="form.id ? '编辑用例' : '新增用例'" width="640px">
+    <!-- append-to-body：glass-card 的 backdrop-filter 会创建包含块，弹窗不加此项会被裁在卡片内 -->
+    <el-dialog v-model="dialog" :title="form.id ? '编辑用例' : '新增用例'" width="640px" append-to-body>
       <el-form :model="form" label-width="90px">
         <el-form-item label="用例名称"><el-input v-model="form.caseName" /></el-form-item>
         <el-form-item label="模块"><el-input v-model="form.module" placeholder="不填默认：默认" /></el-form-item>
@@ -84,7 +85,7 @@
     </el-dialog>
 
     <!-- AI 生成：输入需求 → 调 /ai/generate-cases（耗时 15s+，单独放宽超时） -->
-    <el-dialog v-model="aiDialog" title="AI 生成接口用例" width="640px">
+    <el-dialog v-model="aiDialog" title="AI 生成接口用例" width="640px" append-to-body>
       <el-input v-model="aiRequirement" type="textarea" :rows="5"
         placeholder="描述要测的功能。例：测试若依登录接口，地址 http://localhost:8080/login，POST，body 含 username/password，正确账号返回 code 200 和 token，密码错误返回错误提示" />
       <template #footer>
@@ -96,7 +97,7 @@
     </el-dialog>
 
     <!-- AI 生成结果报告：总数/入库/被拦原因 -->
-    <el-dialog v-model="aiResultDialog" title="AI 生成结果报告" width="640px">
+    <el-dialog v-model="aiResultDialog" title="AI 生成结果报告" width="640px" append-to-body>
       <el-descriptions :column="3" border size="small">
         <el-descriptions-item label="AI 总产出">{{ aiResult.total }}</el-descriptions-item>
         <el-descriptions-item label="校验通过入库">{{ aiResult.accepted }}</el-descriptions-item>

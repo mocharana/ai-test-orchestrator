@@ -25,7 +25,8 @@
       :total="total" :page-size="query.pageSize" :current-page="query.pageNum"
       @current-change="load" />
 
-    <el-dialog v-model="dialog" :title="form.id ? '编辑套件' : '新增套件'" width="520px">
+    <!-- append-to-body：glass-card 的 backdrop-filter 会创建包含块，弹窗不加此项会被裁在卡片内 -->
+    <el-dialog v-model="dialog" :title="form.id ? '编辑套件' : '新增套件'" width="520px" append-to-body>
       <el-form :model="form" label-width="90px">
         <el-form-item label="套件名称"><el-input v-model="form.suiteName" /></el-form-item>
         <el-form-item label="pytest 路径">

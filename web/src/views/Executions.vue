@@ -30,7 +30,8 @@
       :total="total" :page-size="query.pageSize" :current-page="query.pageNum"
       @current-change="load" />
 
-    <el-dialog v-model="detailDialog" title="执行明细" width="860px">
+    <!-- append-to-body：glass-card 的 backdrop-filter 会创建包含块，弹窗不加此项会被裁在卡片内 -->
+    <el-dialog v-model="detailDialog" title="执行明细" width="860px" append-to-body>
       <!-- 接口用例明细 -->
       <template v-if="detailType === 'api'">
         <el-table :data="apiRows" size="small">
@@ -69,7 +70,7 @@
     </el-dialog>
 
     <!-- AI 归因结果：两段式文本 -->
-    <el-dialog v-model="aiOpen" title="AI 失败归因" width="680px">
+    <el-dialog v-model="aiOpen" title="AI 失败归因" width="680px" append-to-body>
       <div class="ai-text">{{ aiText }}</div>
     </el-dialog>
   </div>
