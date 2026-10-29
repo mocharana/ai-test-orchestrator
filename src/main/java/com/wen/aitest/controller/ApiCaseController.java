@@ -53,6 +53,15 @@ public class ApiCaseController {
         return Result.ok();
     }
 
+    /**
+     * 模块下拉选项（筛选器数据源）。
+     * 注意放在 /{id} 之前：字面量路径优先于路径变量，避免被当成 id=modules 解析。
+     */
+    @GetMapping("/modules")
+    public Result<List<String>> modules() {
+        return Result.ok(apiCaseService.listModules());
+    }
+
     @GetMapping("/{id}")
     public Result<ApiCase> getById(@PathVariable Long id) {
         return Result.ok(apiCaseService.getById(id));
@@ -66,14 +75,16 @@ public class ApiCaseController {
         return Result.ok("成功导入 " + count + " 条");
     }
 
-    /** 分页筛选：pageNum/pageSize 必填有默认值，module/caseName/priority 可选 */
+    /** 分页筛选：pageNum/pageSize 有默认值，module/caseName/priority/method/source 可选 */
     @GetMapping("/page")
     public Result<Page<ApiCase>> page(
             @RequestParam(defaultValue = "1") long pageNum,
             @RequestParam(defaultValue = "10") long pageSize,
             @RequestParam(required = false) String module,
             @RequestParam(required = false) String caseName,
-            @RequestParam(required = false) Integer priority) {
-        return Result.ok(apiCaseService.page(pageNum, pageSize, module, caseName, priority));
+            @RequestParam(required = false) Integer priority,
+            @RequestParam(required = false) String method,
+            @RequestParam(required = false) String source) {
+        return Result.ok(apiCaseService.page(pageNum, pageSize, module, caseName, priority, method, source));
     }
 }

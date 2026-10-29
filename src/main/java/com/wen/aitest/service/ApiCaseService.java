@@ -66,16 +66,29 @@ public class ApiCaseService {
     }
 
     /**
-     * 分页 + 可选筛选：module 精确、caseName 模糊、priority 精确。
+     * 分页 + 可选筛选：module 精确、caseName 模糊、priority 精确、method 精确、source 来源。
      * eq/like 首参为布尔条件——成立才拼进 SQL，实现动态查询。
+     * 筛选下推数据库而非前端过滤：前端只有当前页 10 条，过滤会破坏分页语义。
+     * source 语义：AI = 大模型生成（create_by='AI'）；MANUAL = 人工创建（create_by<>'AI'）。
      */
-    public Page<ApiCase> page(long pageNum, long pageSize, String module, String caseName, Integer priority) {
+    public Page<ApiCase> page(long pageNum, long pageSize, String module, String caseName,
+                              Integer priority, String method, String source) {
+        // 方法名统一大写再比对（库里存的是大写，前端下拉也是大写，此处兜底）
+        String methodUpper = StringUtils.hasText(method) ? method.toUpperCase() : null;
         LambdaQueryWrapper<ApiCase> wrapper = new LambdaQueryWrapper<ApiCase>()
                 .eq(StringUtils.hasText(module), ApiCase::getModule, module)
                 .like(StringUtils.hasText(caseName), ApiCase::getCaseName, caseName)
                 .eq(priority != null, ApiCase::getPriority, priority)
+                .eq(methodUpper != null, ApiCase::getMethod, methodUpper)
+                .eq("AI".equals(source), ApiCase::getCreateBy, "AI")
+                .ne("MANUAL".equals(source), ApiCase::getCreateBy, "AI")
                 .orderByDesc(ApiCase::getId);
         return apiCaseMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+    }
+
+    /** 模块下拉选项：库里现存的模块名（去重），供前端筛选器使用 */
+    public List<String> listModules() {
+        return apiCaseMapper.selectDistinctModules();
     }
 
     /**

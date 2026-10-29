@@ -1,8 +1,23 @@
 <template>
   <el-card>
-    <div style="display:flex; gap:10px; margin-bottom:14px">
-      <el-input v-model="query.module" placeholder="模块" style="width:160px" clearable />
-      <el-input v-model="query.caseName" placeholder="用例名称" style="width:200px" clearable />
+    <div class="toolbar">
+      <el-select v-model="query.module" placeholder="模块" clearable style="width:140px" @change="load(1)">
+        <el-option v-for="m in modules" :key="m" :label="m" :value="m" />
+      </el-select>
+      <el-input v-model="query.caseName" placeholder="用例名称" style="width:170px" clearable
+        @keyup.enter="load(1)" />
+      <el-select v-model="query.priority" placeholder="优先级" clearable style="width:104px" @change="load(1)">
+        <el-option label="P0" :value="0" />
+        <el-option label="P1" :value="1" />
+        <el-option label="P2" :value="2" />
+      </el-select>
+      <el-select v-model="query.source" placeholder="来源" clearable style="width:116px" @change="load(1)">
+        <el-option label="AI 生成" value="AI" />
+        <el-option label="手动创建" value="MANUAL" />
+      </el-select>
+      <el-select v-model="query.method" placeholder="方法" clearable style="width:104px" @change="load(1)">
+        <el-option v-for="m in ['GET', 'POST', 'PUT', 'DELETE']" :key="m" :label="m" :value="m" />
+      </el-select>
       <el-button type="primary" @click="load(1)">查询</el-button>
       <el-button @click="reset">重置</el-button>
       <el-button type="warning" @click="aiDialog = true">AI 生成用例</el-button>
@@ -107,7 +122,16 @@ import request from '../api/request'
 
 const rows = ref([])
 const total = ref(0)
-const query = reactive({ pageNum: 1, pageSize: 10, module: '', caseName: '' })
+const modules = ref([])
+const query = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  module: '',
+  caseName: '',
+  priority: null,
+  source: '',
+  method: ''
+})
 const dialog = ref(false)
 const form = reactive({})
 
@@ -120,14 +144,36 @@ const aiResult = ref({})
 
 async function load(pageNum) {
   if (pageNum) query.pageNum = pageNum
-  const page = await request.get('/api-case/page', { params: query })
+  const page = await request.get('/api-case/page', { params: buildParams() })
   rows.value = page.records
   total.value = Number(page.total)
+}
+
+/**
+ * 组装查询参数：空值一律不传。
+ * 关键：priority 清空后是空串，若照传后端 Integer 转换会 400——必须过滤。
+ */
+function buildParams() {
+  const p = { pageNum: query.pageNum, pageSize: query.pageSize }
+  if (query.module) p.module = query.module
+  if (query.caseName) p.caseName = query.caseName
+  if (query.priority !== null && query.priority !== '') p.priority = query.priority
+  if (query.source) p.source = query.source
+  if (query.method) p.method = query.method
+  return p
+}
+
+/** 模块下拉选项来自库内 distinct，新增用例后需刷新 */
+async function loadModules() {
+  modules.value = await request.get('/api-case/modules')
 }
 
 function reset() {
   query.module = ''
   query.caseName = ''
+  query.priority = null
+  query.source = ''
+  query.method = ''
   load(1)
 }
 
@@ -152,6 +198,7 @@ async function save() {
   ElMessage.success('保存成功')
   dialog.value = false
   load()
+  loadModules() // 可能引入了新模块，下拉选项同步刷新
 }
 
 async function del(row) {
@@ -179,10 +226,25 @@ async function aiGenerate() {
     aiDialog.value = false
     aiResultDialog.value = true
     load() // 刷新列表，新用例立刻可见
+    loadModules() // AI 可能造出新模块
   } finally {
     aiLoading.value = false
   }
 }
 
-onMounted(() => load())
+onMounted(() => {
+  load()
+  loadModules()
+})
 </script>
+
+<style scoped>
+/* 筛选条件变多：窄窗口允许换行，避免按钮被挤出可视区 */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+</style>
