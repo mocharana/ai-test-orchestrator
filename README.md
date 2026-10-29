@@ -78,9 +78,10 @@ AI 归因结果落 `t_ai_log`（`biz_type + biz_id` 联合索引），再次查�
    zhipu:
      api-key: <你的Key>
    ```
-3. 后端：IDEA 打开项目，运行 `AiTestOrchestratorApplication`（端口 8081）；
-4. 前端：进入 `web/` 目录执行 `start-frontend.bat`（端口 5173）；
-5. UI 用例：`application.yml` 中配置 `pytest.python-path`（venv 解释器）与 `work-dir`（pytest 项目根）。
+3. 口令与密钥按需用环境变量覆盖（`DB_USERNAME` / `DB_PASSWORD` / `JWT_SECRET`），不设置则使用 `application.yml` 里的本地默认值；
+4. 后端：IDEA 打开项目，运行 `AiTestOrchestratorApplication`（端口 8081）；
+5. 前端：进入 `web/` 目录执行 `start-frontend.bat`（端口 5173）；
+6. UI 用例：`application.yml` 中配置 `pytest.python-path`（venv 解释器）与 `work-dir`（pytest 项目根）。
 
 ## CI
 
@@ -89,7 +90,7 @@ GitHub Actions：push 到 main 自动构建并运行 13 个 JUnit 单元测试�
 ## 已知边界
 
 - UI 执行器依赖宿主机 Python/浏览器生态，未容器化；
-- 数据库口令与 JWT 密钥当前在 application.yml 中明文（学习项目）；生产环境须外部化至环境变量或密钥管理；
+- 数据库口令与 JWT 密钥使用**环境变量占位**（`${DB_USERNAME:root}` / `${DB_PASSWORD:...}` / `${JWT_SECRET:...}`），默认值仅为本地免配置启动；真实环境通过环境变量注入，不写进代码；
 - 单批次内多用例串行执行（并发执行为演进项）；
 - 归因结果默认命中 `t_ai_log` 历史缓存，暂无"强制重新分析"入口；
 - 后台界面按桌面端设计，未做移动端适配。

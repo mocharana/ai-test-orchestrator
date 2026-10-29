@@ -33,9 +33,10 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 库名锁定 ai_test_platform，SQL 只写表名
-    url: jdbc:mysql://localhost:3306/ai_test_platform?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false&allowPublicKeyRetrieval=true
-    username: root
-    password: 123456
+    url: ${DB_URL:jdbc:mysql://localhost:3306/ai_test_platform?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false&allowPublicKeyRetrieval=true}
+    # 口令不硬编码：优先读环境变量，未设置时回落到本地默认值（仓库公开，避免明文暴露）
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
 
 # url 参数说明：
 #   useUnicode + characterEncoding：中文不乱码
@@ -48,8 +49,9 @@ spring:
 # JWT 配置
 # ============================================================
 jwt:
-  # 签名密钥：HMAC-SHA256 要求 ≥32 字节；生产环境不入库（挪 application-local.yml/环境变量）
-  secret: wen-aitest-platform-jwt-secret-key-2026-32bytes!
+  # 签名密钥：HMAC-SHA256 要求 ≥32 字节。
+  # 生产环境用 JWT_SECRET 注入；默认值只为本地免配置启动（仓库公开，勿用于真实环境）
+  secret: '${JWT_SECRET:wen-aitest-platform-jwt-secret-key-2026-32bytes!}'
   # 门票有效期（小时）
   expire-hours: 24
 
@@ -71,4 +73,5 @@ pytest:
   # pytest 项目根目录（conftest.py / pytest.ini 所在，作为子进程工作目录）
   work-dir: C:\Users\rana\Desktop\Python\ruoyi_ui_framework
 
-# 安全提示：密码明文入库仅限学习项目；正规做法抽到 application-local.yml（已在 .gitignore）或环境变量
+# 安全提示：数据库口令与 JWT 密钥已改为环境变量占位（DB_USERNAME / DB_PASSWORD / JWT_SECRET），
+#   默认值只为本地免配置启动，勿用于真实环境；AI Key 仍放在 application-local.yml（已 gitignore）。
