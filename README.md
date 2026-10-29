@@ -4,11 +4,13 @@
 
 ## 功能一览
 
-- **接口用例管理**：CRUD、分页筛选、批量导入（事务原子性）
-- **接口执行引擎**：异步批次（点执行秒回批次 ID）、变量替换（{{token}}）、HTTP 状态码 + JSON 路径双断言
-- **UI 测试执行**：ProcessBuilder 桥接 pytest，复用存量 Selenium 用例，输出快照落库
+- **账号体系**：JWT 登录 + BCrypt 注册（自动加盐，密文自描述）
+- **接口用例管理**：CRUD、**四维下拉筛选**（模块 / 优先级 / 来源 / 方法，条件全部下推数据库）、批量导入（事务原子性）
+- **接口执行引擎**：异步批次（点执行秒回批次 ID）、变量替换（`{{token}}`）、HTTP 状态码 + JSON 路径双断言
+- **UI 测试执行**：ProcessBuilder 桥接 pytest，复用存量 Selenium 用例，输出快照落库；套件按模块归类
+- **执行记录**：批次区分接口 / UI 引擎，显示执行对象快照（用例名 / 套件名）
 - **AI 生成用例**：需求描述 → 智谱 GLM → 数据清洗 → 五规则校验 → 入库（createBy=AI）
-- **AI 失败归因**：失败明细的证据三件套喂给 AI，输出【原因分析】【修复建议】
+- **AI 失败归因**：证据三件套喂给 AI，结果**行内展开**在失败行下方，并落 `t_ai_log` 支持回看——首次 5.7s / 537 token，回看 77ms / 0 token
 - **测试报告**：通过率、14 天趋势、失败 Top 用例（GROUP BY 聚合 + 覆盖索引优化）
 
 ## 技术栈
@@ -56,11 +58,21 @@ AI 的输出是自由文本，不可直接信任。四层防线保证入库用�
 
 统计 SQL 在 46 万行数据下全表扫描（EXPLAIN：type=ALL / 临时表 / filesort）。按阶段 4 的排查链定位后，建**覆盖索引** `(passed, case_id, case_name)`（WHERE+GROUP BY+SELECT 三合一），查询耗时 **0.15s → 0.027s（约 5 倍）**。边界认知：ORDER BY 聚合结果无法走索引（temporary/filesort 仍在，但排序对象降为 31 组聚合行）。
 
+### 前端：backdrop-filter 的包含块陷阱
+
+毛玻璃卡片（`backdrop-filter: blur`）不只是"加个模糊"——它会让元素成为 `position: fixed` 的**包含块**，内部浮层的定位参照从视口变成这个元素。本项目同一个根因连踩三次：**弹窗被裁在卡片内**（遮罩只盖住卡片）、**表格 tooltip 跑到页面角落**、**悬浮提示彻底不触发**。
+
+修法固定两条：浮层加 `append-to-body`（Vue 原生 `<Teleport to="body">`），或不使用 backdrop-filter。同类属性还有 `filter` / `transform` / `perspective` / `will-change` / `contain`——凡在其中放 fixed 浮层都要警惕。
+
+### 归因成本：读穿透缓存
+
+AI 归因结果落 `t_ai_log`（`biz_type + biz_id` 联合索引），再次查看时先查历史、命中即返回：一次归因约 **5732ms + 537 token**，回看 **77ms + 0 token**。批次级回看用一次 `IN` 查询取回全部，避免 N+1。这也让"刷新页面后归因消失"的问题一并解决。
+
 ## 本地运行
 
 **前置**：JDK 25、MySQL 8、Node 16+、Python venv（仅 UI 用例需要）
 
-1. 创建数据库 `ai_test_platform`，按序执行 `sql/01~06` 建表脚本；
+1. 新建库：按序执行 `sql/01~06` 建表脚本；已有库：按序补跑 `sql/07~08` 增量迁移（执行器类型 / 套件模块 / AI 归因 `biz_id`）；
 2. 复制 `application.yml` 同级创建 `application-local.yml`，填入智谱 API Key：
    ```yaml
    zhipu:
@@ -76,13 +88,18 @@ GitHub Actions：push 到 main 自动构建并运行 13 个 JUnit 单元测试�
 
 ## 已知边界
 
-- UI 执行器依赖宿主机 Python/浏览器生态，未容器化（Dockerfile 覆盖后端服务）；
+- UI 执行器依赖宿主机 Python/浏览器生态，未容器化；
 - 数据库口令与 JWT 密钥当前在 application.yml 中明文（学习项目）；生产环境须外部化至环境变量或密钥管理；
-- 单批次内多用例串行执行（并发执行为演进项）。
+- 单批次内多用例串行执行（并发执行为演进项）；
+- 归因结果默认命中 `t_ai_log` 历史缓存，暂无"强制重新分析"入口；
+- 后台界面按桌面端设计，未做移动端适配。
 
 ## 后续规划
 
+- [ ] 用例批量执行（后端 `caseIds` 数组已支持，前端待加多选）
+- [ ] 执行中批次自动轮询（当前需手动刷新）
+- [ ] 批量导入的前端入口（后端 `/api-case/import` 已就绪）
+- [ ] 归因强制重算（`?force=true` 跳过缓存）
 - [ ] 单批次内多用例并发执行（CompletableFuture）
-- [ ] 归因建议结构化输出 + 一键应用（human-in-the-loop 演进）
 - [ ] Docker Compose 编排（app + MySQL + Redis 容器组网）
 - [ ] Redis 缓存层接入（演进故事落地）
