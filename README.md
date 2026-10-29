@@ -104,3 +104,7 @@ GitHub Actions：push 到 main 自动构建并运行 13 个 JUnit 单元测试�
 - [ ] 单批次内多用例并发执行（CompletableFuture）
 - [ ] Docker Compose 编排（app + MySQL + Redis 容器组网）
 - [ ] Redis 缓存层接入（演进故事落地）
+
+## License
+
+[MIT](LICENSE) © 2026 Wen Jiayi
