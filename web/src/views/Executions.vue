@@ -50,7 +50,19 @@
     <el-dialog v-model="detailDialog" title="执行明细" width="860px" append-to-body>
       <!-- 接口用例明细 -->
       <template v-if="detailType === 'api'">
-        <el-table :data="apiRows" size="small">
+        <el-table :data="apiRows" size="small" row-key="id" :expand-row-keys="expandedIds">
+          <!-- 展开列：AI 归因结果内联展示在失败行下方（箭头隐藏，由「AI 归因」按钮控制） -->
+          <el-table-column type="expand" width="1">
+            <template #default="{ row }">
+              <div class="ai-panel">
+                <div class="ai-panel__head">
+                  <span>AI 失败归因</span>
+                  <el-button link type="primary" @click="toggleExpand(row.id)">收起</el-button>
+                </div>
+                <div class="ai-panel__body">{{ aiResults[row.id] }}</div>
+              </div>
+            </template>
+          </el-table-column>
           <el-table-column prop="caseName" label="用例" min-width="130" />
           <el-table-column label="结果" width="80">
             <template #default="{ row }">
@@ -60,11 +72,13 @@
           <el-table-column prop="httpStatus" label="状态码" width="80" />
           <el-table-column prop="assertSummary" label="断言摘要" min-width="180" show-overflow-tooltip />
           <el-table-column prop="costMs" label="耗时(ms)" width="90" />
-          <el-table-column label="操作" width="110" fixed="right">
+          <el-table-column label="操作" width="120" fixed="right">
             <template #default="{ row }">
-              <!-- 只有失败行给 AI 归因入口 -->
+              <!-- 只有失败行给 AI 归因入口；已有结果时按钮变为展开/收起，不再重复调接口 -->
               <el-button v-if="row.passed === 0" size="small" type="warning"
-                :loading="aiBusyId === row.id" @click="analyze(row)">AI 归因</el-button>
+                :loading="aiBusyId === row.id" @click="analyze(row)">
+                {{ !aiResults[row.id] ? 'AI 归因' : (isExpanded(row.id) ? '收起' : '查看归因') }}
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -83,11 +97,6 @@
         </div>
       </template>
       <p v-else class="empty-tip">暂无明细数据</p>
-    </el-dialog>
-
-    <!-- AI 归因结果：两段式文本 -->
-    <el-dialog v-model="aiOpen" title="AI 失败归因" width="680px" append-to-body>
-      <div class="ai-text">{{ aiText }}</div>
     </el-dialog>
   </div>
 </template>
@@ -132,19 +141,37 @@ async function showDetail(row) {
   detailDialog.value = true
 }
 
-/** AI 归因：按单条失败明细调 /ai/analyze-failure/{resultId}（15s+，放宽超时） */
-const aiText = ref('')
-const aiOpen = ref(false)
+/**
+ * AI 归因：按单条失败明细调 /ai/analyze-failure/{resultId}（15s+，放宽超时）。
+ * 结果常驻 aiResults：收起后仍保留，再点「查看归因」直接展开，不重复调接口。
+ */
+const aiResults = reactive({})
+const expandedIds = ref([])
 const aiBusyId = ref(null)
 
 async function analyze(row) {
+  // 已有结果：只切换展开状态
+  if (aiResults[row.id]) {
+    toggleExpand(row.id)
+    return
+  }
   aiBusyId.value = row.id
   try {
-    aiText.value = await request.post('/ai/analyze-failure/' + row.id, {}, { timeout: 60000 })
-    aiOpen.value = true
+    aiResults[row.id] = await request.post('/ai/analyze-failure/' + row.id, {}, { timeout: 60000 })
+    if (!expandedIds.value.includes(row.id)) expandedIds.value.push(row.id)
   } finally {
     aiBusyId.value = null
   }
+}
+
+function toggleExpand(id) {
+  const i = expandedIds.value.indexOf(id)
+  if (i >= 0) expandedIds.value.splice(i, 1)
+  else expandedIds.value.push(id)
+}
+
+function isExpanded(id) {
+  return expandedIds.value.includes(id)
 }
 
 onMounted(() => load())
@@ -178,10 +205,38 @@ onMounted(() => load())
   color: var(--text-faint);
   font-size: 13px;
 }
-.ai-text {
+
+/* ===== 接口明细：AI 归因内联面板 ===== */
+/* 隐藏表格自带的展开箭头——展开动作统一由「AI 归因 / 收起」按钮驱动 */
+:deep(.el-table__expand-icon) {
+  display: none;
+}
+:deep(.el-table__expand-column) {
+  padding: 0 !important;
+}
+:deep(.el-table__expanded-cell) {
+  padding: 0 !important;
+  background: transparent !important;
+}
+.ai-panel {
+  margin: 4px 12px 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(140, 160, 195, 0.16);
+}
+.ai-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  color: var(--text-sub);
+}
+.ai-panel__body {
   white-space: pre-wrap;
   line-height: 1.75;
+  font-size: 13px;
   color: var(--text-main);
-  font-size: 13.5px;
 }
 </style>
