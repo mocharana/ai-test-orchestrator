@@ -6,19 +6,35 @@
     </div>
 
     <el-table :data="rows">
-      <el-table-column prop="id" label="批次ID" width="80" />
-      <el-table-column label="状态" width="110">
+      <el-table-column prop="id" label="批次ID" width="76" />
+      <el-table-column label="类型" width="82">
+        <template #default="{ row }">
+          <el-tag :class="row.execType === 'UI' ? 'tag-ui' : 'tag-api'" size="small">
+            {{ row.execType === 'UI' ? 'UI' : '接口' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="执行对象" min-width="200" show-overflow-tooltip>
+        <template #default="{ row }">
+          {{ row.targetName || '—' }}{{ row.totalCount > 1 ? ` 等 ${row.totalCount} 条` : '' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" width="100">
         <template #default="{ row }">
           <el-tag :class="row.status === 'FINISHED' ? 'tag-mint' : 'tag-p1'">{{ row.status }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="totalCount" label="总数" width="70" />
-      <el-table-column prop="passedCount" label="通过" width="70" />
-      <el-table-column prop="failedCount" label="失败" width="70" />
-      <el-table-column prop="createBy" label="发起人" width="100" />
-      <el-table-column prop="createTime" label="发起时间" width="170" />
-      <el-table-column prop="finishTime" label="完成时间" width="170" />
-      <el-table-column label="操作" fixed="right">
+      <el-table-column prop="totalCount" label="总数" width="64" />
+      <el-table-column prop="passedCount" label="通过" width="64" />
+      <el-table-column prop="failedCount" label="失败" width="64" />
+      <el-table-column prop="createBy" label="发起人" width="90" />
+      <el-table-column label="发起时间" width="180">
+        <template #default="{ row }">{{ fmtTime(row.createTime) }}</template>
+      </el-table-column>
+      <el-table-column label="完成时间" width="180">
+        <template #default="{ row }">{{ fmtTime(row.finishTime) }}</template>
+      </el-table-column>
+      <el-table-column label="操作" fixed="right" width="110">
         <template #default="{ row }">
           <el-button size="small" type="primary" @click="showDetail(row)">查看明细</el-button>
         </template>
@@ -93,6 +109,11 @@ async function load(pageNum) {
   const page = await request.get('/execution/page', { params: query })
   rows.value = page.records
   total.value = Number(page.total)
+}
+
+/** 后端 LocalDateTime 序列化成 2026-10-21T16:16:18，展示时把 T 换成空格 */
+function fmtTime(t) {
+  return t ? String(t).replace('T', ' ') : '—'
 }
 
 async function showDetail(row) {

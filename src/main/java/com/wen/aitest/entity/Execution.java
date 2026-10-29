@@ -18,6 +18,12 @@ public class Execution {
     /** RUNNING / FINISHED */
     private String status;
 
+    /** 执行器类型：API（Java 内置引擎）/ UI（ProcessBuilder 桥 pytest） */
+    private String execType;
+
+    /** 执行对象快照：用例名（接口）或套件名（UI）。快照不随用例改名/删除变化 */
+    private String targetName;
+
     private Integer totalCount;
 
     private Integer passedCount;

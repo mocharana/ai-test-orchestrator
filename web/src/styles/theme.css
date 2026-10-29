@@ -259,6 +259,17 @@ body {
   --el-tag-border-color: var(--mac-mint);
   --el-tag-text-color: var(--mac-mint-text);
 }
+/* 执行器类型：接口 = 雾霾蓝，UI = 淡紫 */
+.el-tag.tag-api {
+  --el-tag-bg-color: var(--mac-blue-soft);
+  --el-tag-border-color: var(--mac-blue);
+  --el-tag-text-color: var(--mac-blue-text);
+}
+.el-tag.tag-ui {
+  --el-tag-bg-color: var(--mac-lilac-soft);
+  --el-tag-border-color: var(--mac-lilac);
+  --el-tag-text-color: var(--mac-lilac-text);
+}
 
 /* ===================== 表单控件（浅色玻璃） ===================== */
 .el-input__wrapper,

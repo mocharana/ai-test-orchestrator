@@ -52,6 +52,12 @@ public class UiSuiteController {
         return Result.ok();
     }
 
+    /** 模块下拉选项（新增/编辑套件时选择或新建模块） */
+    @GetMapping("/modules")
+    public Result<List<String>> modules() {
+        return Result.ok(uiSuiteService.listModules());
+    }
+
     @GetMapping("/{id}")
     public Result<UiSuite> getById(@PathVariable Long id) {
         return Result.ok(uiSuiteService.getById(id));

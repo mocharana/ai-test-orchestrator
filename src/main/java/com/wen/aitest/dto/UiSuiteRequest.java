@@ -12,6 +12,10 @@ public class UiSuiteRequest {
     @Size(max = 100, message = "套件名称最长 100")
     private String suiteName;
 
+    /** 所属模块：可新建（前端 allow-create），留空落为「默认」 */
+    @Size(max = 50, message = "模块最长 50")
+    private String module;
+
     /** pytest 目标路径：相对 work-dir，如 testcases/test_smoke_ui.py */
     @NotBlank(message = "pytest 路径不能为空")
     private String pyPath;

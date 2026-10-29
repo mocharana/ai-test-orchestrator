@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wen.aitest.common.BizException;
 import com.wen.aitest.dto.RunRequest;
+import com.wen.aitest.entity.ApiCase;
 import com.wen.aitest.entity.ApiResult;
 import com.wen.aitest.entity.Execution;
+import com.wen.aitest.mapper.ApiCaseMapper;
 import com.wen.aitest.mapper.ApiResultMapper;
 import com.wen.aitest.mapper.ExecutionMapper;
 import lombok.RequiredArgsConstructor;
@@ -23,17 +25,32 @@ public class ExecutionService {
 
     private final ExecutionMapper executionMapper;
     private final ApiResultMapper apiResultMapper;
+    private final ApiCaseMapper apiCaseMapper;
     private final ExecutionRunner runner;
 
     /** 发起执行：建批次后交线程池异步执行，立即返回批次 ID */
     public Long start(RunRequest req, String currentUser) {
         Execution ex = new Execution();
         ex.setStatus("RUNNING");
+        ex.setExecType("API");
+        ex.setTargetName(resolveTargetName(req.getCaseIds()));
         ex.setTotalCount(req.getCaseIds().size());
         ex.setCreateBy(currentUser);
         executionMapper.insert(ex);
         runner.runAsync(ex.getId(), req.getCaseIds(), currentUser);
         return ex.getId();
+    }
+
+    /**
+     * 执行对象快照：取首个用例名。
+     * 快照在发起时落库，后续用例改名/删除都不影响历史记录展示。
+     */
+    private String resolveTargetName(List<Long> caseIds) {
+        if (caseIds == null || caseIds.isEmpty()) {
+            return "空批次";
+        }
+        ApiCase first = apiCaseMapper.selectById(caseIds.get(0));
+        return first == null ? "用例已删除" : first.getCaseName();
     }
 
     /** 批次状态与统计（前端轮询 RUNNING → FINISHED） */

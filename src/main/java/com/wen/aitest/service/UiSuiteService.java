@@ -12,6 +12,7 @@ import com.wen.aitest.mapper.UiResultMapper;
 import com.wen.aitest.mapper.UiSuiteMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -32,6 +33,7 @@ public class UiSuiteService {
     public Long create(UiSuiteRequest req, String currentUser) {
         UiSuite s = new UiSuite();
         s.setSuiteName(req.getSuiteName());
+        s.setModule(normalizeModule(req.getModule()));
         s.setPyPath(req.getPyPath());
         s.setDescription(req.getDescription());
         s.setCreateBy(currentUser);
@@ -45,9 +47,15 @@ public class UiSuiteService {
         UiSuite s = new UiSuite();
         s.setId(id);
         s.setSuiteName(req.getSuiteName());
+        s.setModule(normalizeModule(req.getModule()));
         s.setPyPath(req.getPyPath());
         s.setDescription(req.getDescription());
         uiSuiteMapper.updateById(s);
+    }
+
+    /** 模块留空落为「默认」——与 t_api_case 的默认值保持一致 */
+    private String normalizeModule(String module) {
+        return StringUtils.hasText(module) ? module.trim() : "默认";
     }
 
     public void delete(Long id) {
@@ -65,11 +73,18 @@ public class UiSuiteService {
                 new LambdaQueryWrapper<UiSuite>().orderByDesc(UiSuite::getId));
     }
 
+    /** 模块下拉选项（去重），供前端筛选/新建时提示已有模块 */
+    public List<String> listModules() {
+        return uiSuiteMapper.selectDistinctModules();
+    }
+
     /** 发起 UI 执行：建批次后交线程池，立即返回批次 ID */
     public Long start(Long suiteId, String currentUser) {
-        checkExist(suiteId);
+        UiSuite suite = checkExist(suiteId);
         Execution ex = new Execution();
         ex.setStatus("RUNNING");
+        ex.setExecType("UI");
+        ex.setTargetName(suite.getSuiteName());
         ex.setTotalCount(1);
         ex.setCreateBy(currentUser);
         executionMapper.insert(ex);

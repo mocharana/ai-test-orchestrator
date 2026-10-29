@@ -17,6 +17,9 @@ public class UiSuite {
 
     private String suiteName;
 
+    /** 所属模块（与 t_api_case.module 同语义，用于归类与筛选） */
+    private String module;
+
     /** pytest 目标路径（目录或单个用例文件，相对 work-dir） */
     private String pyPath;
 

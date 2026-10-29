@@ -7,6 +7,7 @@
 
     <el-table :data="rows">
       <el-table-column prop="id" label="ID" width="60" />
+      <el-table-column prop="module" label="模块" width="130" />
       <el-table-column prop="suiteName" label="套件名称" min-width="140" />
       <el-table-column prop="pyPath" label="pytest 路径" min-width="220" show-overflow-tooltip />
       <el-table-column prop="description" label="备注" min-width="140" />
@@ -29,6 +30,13 @@
     <el-dialog v-model="dialog" :title="form.id ? '编辑套件' : '新增套件'" width="520px" append-to-body>
       <el-form :model="form" label-width="90px">
         <el-form-item label="套件名称"><el-input v-model="form.suiteName" /></el-form-item>
+        <el-form-item label="模块">
+          <!-- filterable + allow-create：可选已有模块，也可直接输入新模块 -->
+          <el-select v-model="form.module" filterable allow-create default-first-option
+            placeholder="选择或输入新模块" style="width:100%">
+            <el-option v-for="m in modules" :key="m" :label="m" :value="m" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="pytest 路径">
           <el-input v-model="form.pyPath" placeholder="相对项目根，如 testcases/test_smoke_ui.py" />
         </el-form-item>
@@ -49,6 +57,7 @@ import request from '../api/request'
 
 const rows = ref([])
 const total = ref(0)
+const modules = ref([])
 const query = reactive({ pageNum: 1, pageSize: 10 })
 const dialog = ref(false)
 const form = reactive({})
@@ -60,8 +69,14 @@ async function load(pageNum) {
   total.value = Number(page.total)
 }
 
+/** 模块下拉选项（库内 distinct），新建模块后需刷新 */
+async function loadModules() {
+  modules.value = await request.get('/ui-suite/modules')
+}
+
 function openAdd() {
   Object.keys(form).forEach((k) => delete form[k])
+  Object.assign(form, { module: '默认' })
   dialog.value = true
 }
 
@@ -80,6 +95,7 @@ async function save() {
   ElMessage.success('保存成功')
   dialog.value = false
   load()
+  loadModules() // 可能新建了模块，下拉选项同步
 }
 
 async function del(row) {
@@ -94,7 +110,10 @@ async function run(row) {
   ElMessage.success('已发起执行，批次 ' + id + '，Selenium 浏览器将自动打开，去「执行记录」查看结果')
 }
 
-onMounted(() => load())
+onMounted(() => {
+  load()
+  loadModules()
+})
 </script>
 
 <style scoped>
