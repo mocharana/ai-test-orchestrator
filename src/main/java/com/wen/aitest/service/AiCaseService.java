@@ -48,7 +48,7 @@ public class AiCaseService {
     public AiGenerateResult generate(String requirement, String currentUser) {
         // 1. 调 AI（统一通道 AiChatService：自动留痕 t_ai_log；温度 0.3 求稳；关深度思考）
         String reply = aiChatService
-                .call("GENERATE", SYSTEM_PROMPT, requirement, currentUser, 0.3)
+                .call("GENERATE", null, SYSTEM_PROMPT, requirement, currentUser, 0.3)
                 .reply();
 
         // 2. 清洗输出：截取首个 [ 到最后一个 ] 之间的内容（防 AI 嘴碎带围栏/解释）

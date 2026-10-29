@@ -132,6 +132,7 @@ async function showDetail(row) {
     detailType.value = 'api'
     apiRows.value = api
     uiRows.value = []
+    loadAiHistory(row.id) // 回填该批次已落库的归因（不自动展开，仅让按钮变「查看归因」）
   } else {
     const ui = await request.get('/ui-suite/results/' + row.id)
     detailType.value = 'ui'
@@ -139,6 +140,21 @@ async function showDetail(row) {
     apiRows.value = []
   }
   detailDialog.value = true
+}
+
+/**
+ * 回填历史归因：一次请求拿该批次所有已分析明细的文本。
+ * 打开明细即可看到「查看归因」，不必再点、也不必再调模型；刷新页面同样有效。
+ */
+async function loadAiHistory(executionId) {
+  try {
+    const map = await request.get('/ai/analysis/' + executionId)
+    Object.keys(map || {}).forEach((id) => {
+      aiResults[id] = map[id]
+    })
+  } catch (e) {
+    // 回填失败不影响明细展示（旧版后端无此接口时静默跳过）
+  }
 }
 
 /**

@@ -14,10 +14,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 /**
  * M5-1 连通冒测：ChatClient 最小调用，验证 平台→智谱 glm-4.5-flash 链路通不通。
@@ -62,5 +65,14 @@ public class AiController {
     public Result<String> analyzeFailure(@PathVariable Long resultId, HttpServletRequest request) {
         String currentUser = (String) request.getAttribute("currentUser");
         return Result.ok(aiAnalysisService.analyze(resultId, currentUser));
+    }
+
+    /**
+     * 某批次下已归因明细的历史结果 { resultId: 归因文本 }。
+     * 前端打开执行明细时一次性拉取，已分析过的行直接可看，不触发模型调用。
+     */
+    @GetMapping("/analysis/{executionId}")
+    public Result<Map<Long, String>> analysisHistory(@PathVariable Long executionId) {
+        return Result.ok(aiAnalysisService.listByExecution(executionId));
     }
 }

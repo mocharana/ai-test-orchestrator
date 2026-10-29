@@ -38,12 +38,13 @@ public class AiChatService {
      * 调用智谱并统一留痕。成功失败都写 t_ai_log；失败抛 BizException 交全局异常处理器。
      *
      * @param bizType     业务类型：GENERATE / ANALYZE
+     * @param bizId       业务对象 ID：ANALYZE 传 t_api_result.id（供历史归因回查）；GENERATE 传 null
      * @param system      角色与游戏规则（稳定）
      * @param user        本次输入（每次变）
      * @param createBy    发起人
      * @param temperature 采样温度：结构化输出求稳用低值
      */
-    public AiCallResult call(String bizType, String system, String user,
+    public AiCallResult call(String bizType, Long bizId, String system, String user,
                              String createBy, double temperature) {
         long t0 = System.currentTimeMillis();
         String reply = null;
@@ -73,6 +74,7 @@ public class AiChatService {
         // 统一留痕：成功失败都写——失败记录同样是成本的一部分
         AiLog row = new AiLog();
         row.setBizType(bizType);
+        row.setBizId(bizId);
         row.setModel(modelName);
         row.setPrompt(system + "\n-----\n" + user);
         row.setResponse(reply);

@@ -18,6 +18,9 @@ public class AiLog {
     /** 业务类型：GENERATE=生成用例 ANALYZE=失败归因 */
     private String bizType;
 
+    /** 业务对象 ID：ANALYZE 时 = t_api_result.id（按明细回查历史归因）；GENERATE 为空 */
+    private Long bizId;
+
     private String model;
 
     private String prompt;
