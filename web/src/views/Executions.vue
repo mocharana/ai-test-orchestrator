@@ -70,8 +70,16 @@
             </template>
           </el-table-column>
           <el-table-column prop="httpStatus" label="状态码" width="80" />
-          <el-table-column prop="assertSummary" label="断言摘要" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="costMs" label="耗时(ms)" width="90" />
+          <!-- 断言摘要：用显式 el-tooltip 而非 show-overflow-tooltip。
+               后者在「弹窗 + 展开行」场景下不触发/定位错乱（内部 hint 机制受包含块影响） -->
+          <el-table-column prop="assertSummary" label="断言摘要" min-width="180">
+            <template #default="{ row }">
+              <el-tooltip :content="row.assertSummary || '—'" placement="top" :show-after="150"
+                popper-class="assert-tip">
+                <span class="cell-ellipsis">{{ row.assertSummary || '—' }}</span>
+              </el-tooltip>
+            </template>
+          </el-table-column>          <el-table-column prop="costMs" label="耗时(ms)" width="90" />
           <el-table-column label="操作" width="120" fixed="right">
             <template #default="{ row }">
               <!-- 只有失败行给 AI 归因入口；已有结果时按钮变为展开/收起，不再重复调接口 -->
@@ -254,5 +262,12 @@ onMounted(() => load())
   line-height: 1.75;
   font-size: 13px;
   color: var(--text-main);
+}
+/* 单元格单行省略：配合 el-tooltip 使用 */
+.cell-ellipsis {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

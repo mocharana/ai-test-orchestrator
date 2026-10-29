@@ -96,6 +96,7 @@ async function doLogin() {
   try {
     const data = await request.post('/auth/login', form)
     localStorage.setItem('token', data.token)
+    localStorage.setItem('username', data.username) // 顶部导航展示当前用户
     router.push('/')
   } finally {
     loading.value = false

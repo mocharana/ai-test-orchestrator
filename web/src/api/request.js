@@ -28,6 +28,7 @@ request.interceptors.response.use(
   (err) => {
     if (err.response && err.response.status === 401) {
       localStorage.removeItem('token')
+      localStorage.removeItem('username')
       ElMessage.error('登录已过期，请重新登录')
       // 硬跳转而非 router.push：热更新/首次导航的竞态下 push 可能被吞，
       // 导致接口 JSON 被当页面渲染——整页跳登录保证干净状态
