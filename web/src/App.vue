@@ -28,13 +28,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 
 /**
  * 当前用户：优先读登录时写入的 username；
  * 老登录态没这个键时，从 JWT payload 的 sub 兜底解析（payload 是 base64url，需补 padding）。
  */
 const username = ref(resolveUser())
+
+// 登录页与后台共用同一个根组件：登录成功只是路由切换，App 不会重新挂载，
+// 因此必须在路由变化时重新解析，否则要手动刷新才会显示用户名。
+watch(() => route.path, () => {
+  username.value = resolveUser()
+})
 
 function resolveUser() {
   const saved = localStorage.getItem('username')
@@ -116,16 +125,20 @@ function logout() {
 }
 
 /* ===================== 用户区：当前用户 + 退出 ===================== */
+/* 三个元素统一高度与行高，避免 el-button 默认 32px 行盒与文字行盒错位 */
 .nav-user {
   display: flex;
   align-items: center;
   gap: 14px;
   flex-shrink: 0;
+  height: 20px;
 }
 .user-name {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
+  height: 20px;
+  line-height: 20px;
   font-size: 13.5px;
   letter-spacing: 0.02em;
   color: rgba(255, 255, 255, 0.75);
@@ -133,6 +146,7 @@ function logout() {
 /* 在线状态点：青色微光，与导航激活下划线同色系 */
 .user-name::before {
   content: '';
+  flex: 0 0 auto;
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -140,12 +154,20 @@ function logout() {
   box-shadow: 0 0 10px rgba(34, 211, 238, 0.85);
 }
 
-/* 退出登录：柔和珊瑚红 */
+/* 退出登录：柔和珊瑚红；覆盖 el-button 默认尺寸，与用户名同字号同行高 */
 .logout {
-  color: #ff9d93;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0;
+  font-size: 13.5px;
+  line-height: 20px;
   letter-spacing: 0.02em;
+  color: #ff9d93;
   transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+.logout :deep(span) {
+  line-height: 20px;
 }
 .logout:hover {
   color: #ffb6ad;
