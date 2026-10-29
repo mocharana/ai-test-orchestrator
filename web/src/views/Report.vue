@@ -1,38 +1,52 @@
 <template>
-  <div>
+  <div class="report">
     <!-- 统计卡片行：总览四指标 -->
-    <el-row :gutter="12">
-      <el-col :span="6"><el-card><div class="stat"><div class="num">{{ s.batches }}</div><div class="label">执行批次</div></div></el-card></el-col>
-      <el-col :span="6"><el-card><div class="stat"><div class="num">{{ s.cases }}</div><div class="label">用例执行次数</div></div></el-card></el-col>
-      <el-col :span="6"><el-card><div class="stat"><div class="num" style="color:#67c23a">{{ s.passed }}</div><div class="label">通过</div></div></el-card></el-col>
-      <el-col :span="6"><el-card><div class="stat"><div class="num" style="color:#f56c6c">{{ s.failed }}</div><div class="label">失败</div></div></el-card></el-col>
-    </el-row>
+    <div class="stat-grid">
+      <div class="glass-card stat">
+        <div class="num">{{ s.batches }}</div>
+        <div class="label">执行批次</div>
+      </div>
+      <div class="glass-card stat">
+        <div class="num">{{ s.cases }}</div>
+        <div class="label">用例执行次数</div>
+      </div>
+      <div class="glass-card stat">
+        <div class="num num-pass">{{ s.passed }}</div>
+        <div class="label">通过</div>
+      </div>
+      <div class="glass-card stat">
+        <div class="num num-fail">{{ s.failed }}</div>
+        <div class="label">失败</div>
+      </div>
+    </div>
 
     <!-- 通过率 -->
-    <el-card style="margin-top:12px">
-      <div style="display:flex; align-items:center; gap:16px">
-        <span style="white-space:nowrap">用例通过率</span>
-        <el-progress :percentage="s.passRate" style="flex:1" />
+    <div class="glass-card rate-card">
+      <div class="rate-row">
+        <span class="rate-label">用例通过率</span>
+        <el-progress :percentage="s.passRate" :stroke-width="10" style="flex:1" />
       </div>
-    </el-card>
+    </div>
 
     <!-- 按天趋势 -->
-    <el-card header="近 14 天执行趋势" style="margin-top:12px">
-      <el-table :data="trend" border size="small">
-        <el-table-column prop="day" label="日期" />
+    <div class="glass-card section">
+      <div class="glass-card__title">近 14 天执行趋势</div>
+      <el-table :data="trend" size="small">
+        <el-table-column prop="day" label="日期" min-width="240" />
         <el-table-column prop="batches" label="批次" width="120" />
         <el-table-column prop="passed" label="通过" width="120" />
         <el-table-column prop="failed" label="失败" width="120" />
       </el-table>
-    </el-card>
+    </div>
 
     <!-- 失败 Top -->
-    <el-card header="失败 Top5 用例（接口用例）" style="margin-top:12px">
-      <el-table :data="top" border size="small">
+    <div class="glass-card section">
+      <div class="glass-card__title">失败 Top5 用例（接口用例）</div>
+      <el-table :data="top" size="small">
         <el-table-column prop="caseName" label="用例" />
         <el-table-column prop="failTimes" label="失败次数" width="140" />
       </el-table>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -58,7 +72,58 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.stat { text-align: center; }
-.num { font-size: 28px; font-weight: bold; }
-.label { color: #909399; font-size: 13px; margin-top: 4px; }
+.report {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.stat {
+  padding: 22px 20px;
+  text-align: center;
+}
+.num {
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #33517c;
+}
+.num-pass {
+  color: #2c7057;
+}
+.num-fail {
+  color: #8a4747;
+}
+.label {
+  margin-top: 6px;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--text-sub);
+}
+.rate-card {
+  padding: 18px 22px;
+}
+.rate-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.rate-label {
+  flex-shrink: 0;
+  font-size: 13.5px;
+  color: var(--text-sub);
+}
+.section {
+  padding: 18px 22px 10px;
+}
+
+@media (max-width: 1100px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 </style>

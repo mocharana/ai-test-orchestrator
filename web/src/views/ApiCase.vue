@@ -1,5 +1,5 @@
 <template>
-  <el-card>
+  <div class="glass-card">
     <div class="toolbar">
       <el-select v-model="query.module" placeholder="模块" clearable style="width:140px" @change="load(1)">
         <el-option v-for="m in modules" :key="m" :label="m" :value="m" />
@@ -24,18 +24,18 @@
       <el-button type="success" style="margin-left:auto" @click="openAdd">新增用例</el-button>
     </div>
 
-    <el-table :data="rows" border stripe>
+    <el-table :data="rows">
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="caseName" label="用例名称" min-width="140" />
       <el-table-column prop="module" label="模块" width="100" />
       <el-table-column label="优先级" width="80">
         <template #default="{ row }">
-          <el-tag :type="['danger', 'warning', 'info'][row.priority]">{{ ['P0', 'P1', 'P2'][row.priority] }}</el-tag>
+          <el-tag :class="['tag-p0', 'tag-p1', 'tag-p2'][row.priority]">{{ ['P0', 'P1', 'P2'][row.priority] }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="来源" width="80">
         <template #default="{ row }">
-          <el-tag :type="row.createBy === 'AI' ? 'warning' : 'info'" size="small">
+          <el-tag :class="row.createBy === 'AI' ? 'tag-ai' : 'tag-manual'" size="small">
             {{ row.createBy === 'AI' ? 'AI' : '手动' }}
           </el-tag>
         </template>
@@ -112,7 +112,7 @@
         <el-button type="primary" @click="aiResultDialog = false">知道了</el-button>
       </template>
     </el-dialog>
-  </el-card>
+  </div>
 </template>
 
 <script setup>

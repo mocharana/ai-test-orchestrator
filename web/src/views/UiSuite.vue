@@ -1,10 +1,11 @@
 <template>
-  <el-card>
-    <div style="display:flex; gap:10px; margin-bottom:14px">
+  <div class="glass-card">
+    <div class="toolbar">
       <el-button type="success" @click="openAdd">新增套件</el-button>
+      <span class="toolbar-tip">套件 = 一条 pytest 命令的配置，执行结果在「执行记录」查看</span>
     </div>
 
-    <el-table :data="rows" border stripe>
+    <el-table :data="rows">
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="suiteName" label="套件名称" min-width="140" />
       <el-table-column prop="pyPath" label="pytest 路径" min-width="220" show-overflow-tooltip />
@@ -37,7 +38,7 @@
         <el-button type="primary" @click="save">保存</el-button>
       </template>
     </el-dialog>
-  </el-card>
+  </div>
 </template>
 
 <script setup>
@@ -94,3 +95,16 @@ async function run(row) {
 
 onMounted(() => load())
 </script>
+
+<style scoped>
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.toolbar-tip {
+  color: var(--text-faint);
+  font-size: 12.5px;
+}
+</style>

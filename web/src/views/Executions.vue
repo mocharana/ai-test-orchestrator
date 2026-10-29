@@ -1,15 +1,15 @@
 <template>
-  <el-card>
-    <div style="margin-bottom:14px">
+  <div class="glass-card">
+    <div class="toolbar">
       <el-button type="primary" @click="load()">刷新</el-button>
-      <span style="margin-left:10px; color:#909399; font-size:13px">提示：执行中批次会从 RUNNING 变为 FINISHED，手动刷新查看</span>
+      <span class="toolbar-tip">执行中批次会从 RUNNING 变为 FINISHED，手动刷新查看</span>
     </div>
 
-    <el-table :data="rows" border stripe>
+    <el-table :data="rows">
       <el-table-column prop="id" label="批次ID" width="80" />
       <el-table-column label="状态" width="110">
         <template #default="{ row }">
-          <el-tag :type="row.status === 'FINISHED' ? 'success' : 'warning'">{{ row.status }}</el-tag>
+          <el-tag :class="row.status === 'FINISHED' ? 'tag-mint' : 'tag-p1'">{{ row.status }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="totalCount" label="总数" width="70" />
@@ -33,11 +33,11 @@
     <el-dialog v-model="detailDialog" title="执行明细" width="860px">
       <!-- 接口用例明细 -->
       <template v-if="detailType === 'api'">
-        <el-table :data="apiRows" border size="small">
+        <el-table :data="apiRows" size="small">
           <el-table-column prop="caseName" label="用例" min-width="130" />
           <el-table-column label="结果" width="80">
             <template #default="{ row }">
-              <el-tag :type="row.passed === 1 ? 'success' : 'danger'">{{ row.passed === 1 ? '通过' : '失败' }}</el-tag>
+              <el-tag :class="row.passed === 1 ? 'tag-mint' : 'tag-p0'">{{ row.passed === 1 ? '通过' : '失败' }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="httpStatus" label="状态码" width="80" />
@@ -54,24 +54,25 @@
       </template>
       <!-- UI 套件明细 -->
       <template v-else-if="detailType === 'ui'">
-        <div v-for="r in uiRows" :key="r.id" style="margin-bottom:12px">
-          <p><b>{{ r.suiteName }}</b>
-            <el-tag :type="r.passed === 1 ? 'success' : 'danger'" size="small" style="margin:0 8px">
+        <div v-for="r in uiRows" :key="r.id" class="ui-block">
+          <p class="ui-head">
+            <b>{{ r.suiteName }}</b>
+            <el-tag :class="r.passed === 1 ? 'tag-mint' : 'tag-p0'" size="small">
               {{ r.passed === 1 ? '全部通过' : '存在失败' }}
             </el-tag>
-            <span style="color:#909399; font-size:12px">exit={{ r.exitCode }} · {{ r.summary }} · {{ r.costMs }}ms</span>
+            <span class="ui-meta">exit={{ r.exitCode }} · {{ r.summary }} · {{ r.costMs }}ms</span>
           </p>
-          <el-input type="textarea" :model-value="r.output" :rows="10" readonly style="margin-top:6px" />
+          <el-input type="textarea" :model-value="r.output" :rows="10" readonly />
         </div>
       </template>
-      <p v-else style="color:#909399">暂无明细数据</p>
+      <p v-else class="empty-tip">暂无明细数据</p>
     </el-dialog>
 
     <!-- AI 归因结果：两段式文本 -->
     <el-dialog v-model="aiOpen" title="AI 失败归因" width="680px">
-      <div style="white-space:pre-wrap; line-height:1.7">{{ aiText }}</div>
+      <div class="ai-text">{{ aiText }}</div>
     </el-dialog>
-  </el-card>
+  </div>
 </template>
 
 <script setup>
@@ -126,3 +127,39 @@ async function analyze(row) {
 
 onMounted(() => load())
 </script>
+
+<style scoped>
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.toolbar-tip {
+  color: var(--text-faint);
+  font-size: 12.5px;
+}
+.ui-block {
+  margin-bottom: 14px;
+}
+.ui-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+.ui-meta {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+.empty-tip {
+  color: var(--text-faint);
+  font-size: 13px;
+}
+.ai-text {
+  white-space: pre-wrap;
+  line-height: 1.75;
+  color: var(--text-main);
+  font-size: 13.5px;
+}
+</style>
